@@ -194,7 +194,7 @@ Wait, timing fix — Shot 3 runs to 1:10, not 0:54. Shot 4 starts at **1:10**.
 - OmniBridge logo animates in with three lines of text appearing in sequence:
   - Line 1 at 2:07: `⬡ OmniBridge`
   - Line 2 at 2:10: `An agent category that didn't exist a year ago.`
-  - Line 3 at 2:13: `Built with Claude Opus 4.7 · MIT · github.com/YOUR_ORG/omnibridge`
+  - Line 3 at 2:13: `Built with Claude Opus 4.7 · MIT · github.com/adindamochamad/omnibridge`
 - Hold final frame for 5 seconds — judges motivated enough to click the repo link need time to read the URL
 - Faint footer text: `Opus 4.7 Hackathon 2026`
 

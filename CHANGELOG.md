@@ -67,4 +67,4 @@ Initial release for the Claude Opus 4.7 Hackathon 2026.
 - `docs/SUBMISSION.md` — hackathon submission pitch, copy-paste-ready for form fields
 - `docs/RELEASE_GUIDE.md` — how to produce signed DMG/MSI/AppImage artifacts
 
-[0.1.0]: https://github.com/YOUR_ORG/omnibridge/releases/tag/v0.1.0
+[0.1.0]: https://github.com/adindamochamad/omnibridge/releases/tag/v0.1.0

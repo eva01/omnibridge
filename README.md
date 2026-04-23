@@ -10,8 +10,7 @@ OmniBridge identifies any legacy serial device protocol — binary, undocumented
 ![Tauri](https://img.shields.io/badge/Tauri-2.0-24C8DB?logo=tauri)
 ![Svelte 5](https://img.shields.io/badge/Svelte-5.0-FF3E00?logo=svelte)
 ![Rust](https://img.shields.io/badge/Rust-stable-000000?logo=rust)
-<!-- After you push to GitHub, replace YOUR_ORG/omnibridge below -->
-<!-- ![CI](https://github.com/YOUR_ORG/omnibridge/actions/workflows/ci.yml/badge.svg) -->
+![CI](https://github.com/adindamochamad/omnibridge/actions/workflows/ci.yml/badge.svg)
 ![29 tests](https://img.shields.io/badge/tests-29%20passing-22c55e)
 
 *Built for the Claude Opus 4.7 Hackathon 2026 · Problem Statement: **Build For What's Next***
@@ -151,7 +150,7 @@ Or build from source (below).
 Requires: [Rust](https://rustup.rs), [Node.js](https://nodejs.org) 20+, and [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
 
 ```bash
-git clone https://github.com/YOUR_ORG/omnibridge.git
+git clone https://github.com/adindamochamad/omnibridge.git
 cd omnibridge
 npm install
 npm run tauri dev

@@ -94,7 +94,7 @@ Centerpiece: a live Modbus RTU investigation where Claude receives unreadable bi
 
 ## Repository
 
-**GitHub**: [link after push]
+**GitHub**: https://github.com/adindamochamad/omnibridge
 
 Contains full source under MIT license, pre-built installers for all three desktop platforms, comprehensive documentation including `docs/DEMO_DRILL.md` (reproducible test checklist), `docs/VIDEO_SCRIPT_FINAL.md` (shot-by-shot production script), and `docs/SUBMISSION.md` (this document).
 

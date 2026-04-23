@@ -120,7 +120,7 @@ Alternative: show a serial port terminal emulator with unreadable binary garbage
 
 > "OmniBridge"
 > "Intelligent Serial Gateway"
-> **github.com/YOUR_ORG/omnibridge**
+> **github.com/adindamochamad/omnibridge**
 
 **End card:** Opus 4.7 Hackathon 2026
 
