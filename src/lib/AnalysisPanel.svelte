@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ProtocolAnalysis } from '$lib/claude.js';
+  import type { ProtocolAnalysis, AnalysisField } from '$lib/claude.js';
 
   let {
     analysis,
@@ -7,18 +7,64 @@
     error,
     recognized = false,
     sampleCount = 0,
+    onFieldEdit,
   }: {
     analysis: ProtocolAnalysis | null;
     loading: boolean;
     error: string | null;
     recognized?: boolean;
     sampleCount?: number;
+    /** Called when user manually edits a field's regex. Parent should merge
+     *  the new regex into analysisResult so the live dashboard re-parses. */
+    onFieldEdit?: (fieldName: string, patch: Partial<AnalysisField>) => void;
   } = $props();
 
   function confidenceColor(n: number): string {
     if (n >= 80) return '#22c55e';
     if (n >= 55) return '#f59e0b';
     return '#f87171';
+  }
+
+  // Inline regex edit state — one field at a time
+  let editingField = $state<string | null>(null);
+  let draftRegex = $state('');
+  let draftError = $state<string | null>(null);
+
+  function startEdit(field: AnalysisField) {
+    editingField = field.name;
+    draftRegex = field.regex ?? '';
+    draftError = null;
+  }
+
+  function cancelEdit() {
+    editingField = null;
+    draftRegex = '';
+    draftError = null;
+  }
+
+  function saveEdit() {
+    if (editingField === null) return;
+    // Validate regex compiles
+    if (draftRegex.trim()) {
+      try {
+        new RegExp(draftRegex);
+      } catch (e) {
+        draftError = `Invalid regex: ${(e as Error).message}`;
+        return;
+      }
+    }
+    onFieldEdit?.(editingField, { regex: draftRegex.trim() || undefined });
+    cancelEdit();
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      saveEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelEdit();
+    }
   }
 </script>
 
@@ -71,14 +117,48 @@
 
         <!-- Fields table -->
         {#if analysis.fields.length > 0}
-          <div class="section-label">Extracted Fields</div>
+          <div class="section-label">Extracted Fields <span class="edit-hint">· click ✎ to edit regex</span></div>
           <div class="fields-table">
             {#each analysis.fields as field}
               <div class="field-row">
                 <span class="field-name">{field.name}</span>
                 <span class="field-value">{field.value}</span>
                 <span class="field-desc">{field.description}</span>
+                {#if onFieldEdit}
+                  <button
+                    class="field-edit-btn"
+                    onclick={() => startEdit(field)}
+                    title="Edit this field's regex"
+                    disabled={editingField !== null && editingField !== field.name}
+                  >✎</button>
+                {/if}
               </div>
+              {#if editingField === field.name}
+                <div class="field-edit-panel">
+                  <label class="edit-label">
+                    <span class="edit-label-text">
+                      Regex {field.match_hex ? '(matches hex representation)' : '(matches ASCII)'}
+                    </span>
+                    <input
+                      type="text"
+                      class="edit-input"
+                      class:invalid={draftError !== null}
+                      bind:value={draftRegex}
+                      onkeydown={handleKeydown}
+                      placeholder="Empty regex disables parsing for this field"
+                      spellcheck="false"
+                      autocomplete="off"
+                    />
+                  </label>
+                  {#if draftError}
+                    <div class="edit-error">{draftError}</div>
+                  {/if}
+                  <div class="edit-actions">
+                    <button class="edit-cancel" onclick={cancelEdit}>Cancel (Esc)</button>
+                    <button class="edit-save" onclick={saveEdit}>Save (Enter)</button>
+                  </div>
+                </div>
+              {/if}
             {/each}
           </div>
         {/if}
@@ -336,12 +416,135 @@
 
   .field-row {
     display: grid;
-    grid-template-columns: 120px minmax(60px, 1fr) 2fr;
+    grid-template-columns: 120px minmax(60px, 1fr) 2fr auto;
     gap: 0.4rem;
     padding: 0.2rem 0.4rem;
     background: #111828;
     border-radius: 4px;
     align-items: baseline;
+  }
+
+  .field-edit-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #4a5a7a;
+    cursor: pointer;
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+
+  .field-edit-btn:hover:not(:disabled) {
+    color: #a78bfa;
+    border-color: #4a3870;
+    background: #1a1428;
+  }
+
+  .field-edit-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .field-edit-panel {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.55rem 0.6rem;
+    background: #0e1424;
+    border: 1px solid #2a3450;
+    border-left: 2px solid #a78bfa;
+    border-radius: 0 4px 4px 0;
+    margin-top: 2px;
+  }
+
+  .edit-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .edit-label-text {
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #a78bfa;
+  }
+
+  .edit-input {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.5rem;
+    background: #050810;
+    color: #e0e8ff;
+    border: 1px solid #2a3450;
+    border-radius: 3px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .edit-input:focus {
+    border-color: #a78bfa;
+  }
+
+  .edit-input.invalid {
+    border-color: #f87171;
+    background: #180808;
+  }
+
+  .edit-error {
+    font-size: 0.68rem;
+    color: #f87171;
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: flex-end;
+    margin-top: 0.15rem;
+  }
+
+  .edit-cancel,
+  .edit-save {
+    font-size: 0.68rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+
+  .edit-cancel {
+    background: #1a1f30;
+    color: #8090b0;
+    border: 1px solid #2a3450;
+  }
+
+  .edit-cancel:hover {
+    background: #24304a;
+  }
+
+  .edit-save {
+    background: #3a1e78;
+    color: #fff;
+    border: 1px solid #5a3ab0;
+  }
+
+  .edit-save:hover {
+    background: #4a2e92;
+    border-color: #7050d0;
+  }
+
+  .edit-hint {
+    color: #4a5a7a;
+    font-weight: 400;
+    text-transform: none;
+    font-style: italic;
   }
 
   .field-row:nth-child(odd) {

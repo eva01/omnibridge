@@ -372,12 +372,64 @@ export interface AgentStep {
   error?: string;
 }
 
+/** Aggregate token usage + estimated cost across the full agent loop.
+ *  Pricing is approximate — consult anthropic.com/pricing for authoritative rates.
+ *  These constants match public Opus-tier pricing as of early 2026 and are used
+ *  only for the cost indicator shown to the user, not for billing. */
+const PRICING_USD_PER_MTOK = {
+  input: 15.0,
+  output: 75.0,
+  cache_write: 18.75,
+  cache_read: 1.5,
+};
+
+export interface UsageStats {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens: number;
+  cache_write_tokens: number;
+  estimated_cost_usd: number;
+  /** 0-1 — fraction of input tokens served from prompt cache (higher = cheaper) */
+  cache_hit_ratio: number;
+}
+
+function emptyUsage(): UsageStats {
+  return {
+    input_tokens: 0,
+    output_tokens: 0,
+    cache_read_tokens: 0,
+    cache_write_tokens: 0,
+    estimated_cost_usd: 0,
+    cache_hit_ratio: 0,
+  };
+}
+
+function addUsageFromResponse(acc: UsageStats, u: Anthropic.Messages.Usage | undefined): void {
+  if (!u) return;
+  acc.input_tokens += u.input_tokens ?? 0;
+  acc.output_tokens += u.output_tokens ?? 0;
+  // @ts-ignore — cache_* fields may not be in older SDK types
+  acc.cache_read_tokens += (u.cache_read_input_tokens as number | undefined) ?? 0;
+  // @ts-ignore
+  acc.cache_write_tokens += (u.cache_creation_input_tokens as number | undefined) ?? 0;
+
+  acc.estimated_cost_usd =
+    (acc.input_tokens * PRICING_USD_PER_MTOK.input) / 1_000_000 +
+    (acc.output_tokens * PRICING_USD_PER_MTOK.output) / 1_000_000 +
+    (acc.cache_write_tokens * PRICING_USD_PER_MTOK.cache_write) / 1_000_000 +
+    (acc.cache_read_tokens * PRICING_USD_PER_MTOK.cache_read) / 1_000_000;
+
+  const totalInput = acc.input_tokens + acc.cache_read_tokens + acc.cache_write_tokens;
+  acc.cache_hit_ratio = totalInput > 0 ? acc.cache_read_tokens / totalInput : 0;
+}
+
 export interface AgentResult {
   trace: AgentStep[];
   analysis: ProtocolAnalysis | null;
   error: string | null;
   stopped_at: 'end_turn' | 'max_steps' | 'error';
   total_api_calls: number;
+  usage: UsageStats;
 }
 
 export interface AgentContext {
@@ -401,12 +453,14 @@ export async function analyzeWithAgent(
       error: 'API key not configured. Open Settings to add one.',
       stopped_at: 'error',
       total_api_calls: 0,
+      usage: emptyUsage(),
     };
   }
 
   const client = getClient(apiKey);
   const trace: AgentStep[] = [];
   let apiCalls = 0;
+  const usage = emptyUsage();
 
   function emit(step: Omit<AgentStep, 'id' | 'timestamp'>): AgentStep {
     const full: AgentStep = {
@@ -475,8 +529,11 @@ Use your tools to investigate as needed. Begin investigation now.`;
         error: friendly,
         stopped_at: 'error',
         total_api_calls: apiCalls,
+        usage,
       };
     }
+
+    addUsageFromResponse(usage, response.usage);
 
     if (response.stop_reason === 'max_tokens') {
       emit({ type: 'error', error: 'Response exceeded max_tokens budget' });
@@ -486,6 +543,7 @@ Use your tools to investigate as needed. Begin investigation now.`;
         error: 'Response exceeded max_tokens budget',
         stopped_at: 'error',
         total_api_calls: apiCalls,
+        usage,
       };
     }
 
@@ -548,6 +606,7 @@ Use your tools to investigate as needed. Begin investigation now.`;
           error: 'Agent ended without text output',
           stopped_at: 'end_turn',
           total_api_calls: apiCalls,
+          usage,
         };
       }
 
@@ -562,6 +621,7 @@ Use your tools to investigate as needed. Begin investigation now.`;
           error: `No JSON in final response: ${text.slice(0, 150)}`,
           stopped_at: 'end_turn',
           total_api_calls: apiCalls,
+          usage,
         };
       }
 
@@ -579,6 +639,7 @@ Use your tools to investigate as needed. Begin investigation now.`;
           error: null,
           stopped_at: 'end_turn',
           total_api_calls: apiCalls,
+          usage,
         };
       } catch (e) {
         emit({ type: 'error', error: `Malformed final JSON: ${(e as Error).message}` });
@@ -588,6 +649,7 @@ Use your tools to investigate as needed. Begin investigation now.`;
           error: `Malformed final JSON: ${(e as Error).message}`,
           stopped_at: 'end_turn',
           total_api_calls: apiCalls,
+          usage,
         };
       }
     }
@@ -600,6 +662,7 @@ Use your tools to investigate as needed. Begin investigation now.`;
       error: `Unexpected stop_reason: ${response.stop_reason}`,
       stopped_at: 'error',
       total_api_calls: apiCalls,
+      usage,
     };
   }
 
@@ -610,5 +673,6 @@ Use your tools to investigate as needed. Begin investigation now.`;
     error: `Exceeded max agent steps (${MAX_AGENT_STEPS})`,
     stopped_at: 'max_steps',
     total_api_calls: apiCalls,
+    usage,
   };
 }

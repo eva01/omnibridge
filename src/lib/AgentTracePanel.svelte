@@ -1,7 +1,7 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
   import { tick } from 'svelte';
-  import type { AgentStep } from '$lib/claude.js';
+  import type { AgentStep, UsageStats } from '$lib/claude.js';
 
   let {
     trace,
@@ -9,13 +9,48 @@
     error,
     apiCalls,
     stoppedAt,
+    usage = null,
   }: {
     trace: AgentStep[];
     loading: boolean;
     error: string | null;
     apiCalls: number;
     stoppedAt: 'end_turn' | 'max_steps' | 'error' | null;
+    usage?: UsageStats | null;
   } = $props();
+
+  function formatCost(c: number): string {
+    if (c < 0.001) return '< $0.001';
+    if (c < 0.01) return `$${c.toFixed(4)}`;
+    return `$${c.toFixed(3)}`;
+  }
+
+  function formatTokens(n: number): string {
+    if (n < 1000) return `${n}`;
+    return `${(n / 1000).toFixed(1)}K`;
+  }
+
+  let copyStatus = $state<'idle' | 'copied' | 'failed'>('idle');
+  let copyTimer: ReturnType<typeof setTimeout> | null = null;
+
+  async function copyTraceJson() {
+    const payload = {
+      exported_at: new Date().toISOString(),
+      stopped_at: stoppedAt,
+      api_calls: apiCalls,
+      usage,
+      trace,
+    };
+    const json = JSON.stringify(payload, null, 2);
+    try {
+      await navigator.clipboard.writeText(json);
+      copyStatus = 'copied';
+    } catch {
+      copyStatus = 'failed';
+    }
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => (copyStatus = 'idle'), 2000);
+  }
 
   let expanded = $state<Record<string, boolean>>({});
   let bodyEl = $state<HTMLDivElement | null>(null);
@@ -171,6 +206,34 @@
       {apiCalls} API {apiCalls === 1 ? 'call' : 'calls'} ·
       {toolCallCount} {toolCallCount === 1 ? 'tool' : 'tools'} ·
       {trace.length} {trace.length === 1 ? 'step' : 'steps'}
+      {#if usage && (usage.input_tokens > 0 || usage.output_tokens > 0)}
+        <span
+          class="cost-chip"
+          title={`Tokens · in: ${usage.input_tokens} · out: ${usage.output_tokens} · cached: ${usage.cache_read_tokens} · cache-write: ${usage.cache_write_tokens}\nEstimated cost at public Opus 4.7 rates — consult anthropic.com/pricing for authoritative figures.`}
+        >
+          💰 {formatCost(usage.estimated_cost_usd)}
+          {#if usage.cache_hit_ratio > 0.1}
+            <span class="cache-ratio">· {Math.round(usage.cache_hit_ratio * 100)}% cache</span>
+          {/if}
+        </span>
+      {/if}
+      {#if trace.length > 0}
+        <button
+          class="copy-btn"
+          onclick={copyTraceJson}
+          title="Copy full trace as JSON — useful for bug reports or sharing"
+          class:success={copyStatus === 'copied'}
+          class:failed={copyStatus === 'failed'}
+        >
+          {#if copyStatus === 'copied'}
+            ✓ Copied
+          {:else if copyStatus === 'failed'}
+            ✗ Failed
+          {:else}
+            📋 Copy JSON
+          {/if}
+        </button>
+      {/if}
     </div>
   </div>
 
@@ -224,6 +287,38 @@
             <span></span><span></span><span></span>
           </div>
           <span class="thinking-text">Claude is thinking…</span>
+        </div>
+      {/if}
+
+      {#if !loading && stoppedAt === 'end_turn' && usage && usage.estimated_cost_usd > 0}
+        <div class="cost-summary" in:fly={{ y: 8, duration: 300 }}>
+          <div class="cost-summary-header">
+            <span class="cost-summary-icon">💰</span>
+            <span class="cost-summary-title">Investigation cost</span>
+            <span class="cost-summary-total">{formatCost(usage.estimated_cost_usd)}</span>
+          </div>
+          <div class="cost-summary-grid">
+            <div class="cost-row">
+              <span class="cost-label">Input tokens (fresh)</span>
+              <span class="cost-value">{formatTokens(usage.input_tokens)}</span>
+            </div>
+            <div class="cost-row">
+              <span class="cost-label">Input tokens (cached, ~10× cheaper)</span>
+              <span class="cost-value cached">{formatTokens(usage.cache_read_tokens)}</span>
+            </div>
+            <div class="cost-row">
+              <span class="cost-label">Output tokens</span>
+              <span class="cost-value">{formatTokens(usage.output_tokens)}</span>
+            </div>
+            <div class="cost-row">
+              <span class="cost-label">Prompt cache hit ratio</span>
+              <span class="cost-value cached">{Math.round(usage.cache_hit_ratio * 100)}%</span>
+            </div>
+          </div>
+          <div class="cost-summary-note">
+            Estimated at public Opus 4.7 pricing. Prompt caching makes repeat investigations
+            {#if usage.cache_hit_ratio > 0.5}substantially{:else}meaningfully{/if} cheaper than the headline rate.
+          </div>
         </div>
       {/if}
     {/if}
@@ -315,6 +410,138 @@
     font-size: 0.64rem;
     color: #4a5a7a;
     font-family: "JetBrains Mono", monospace;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .cost-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.62rem;
+    padding: 0.1rem 0.4rem;
+    background: #1f2a14;
+    color: #86efac;
+    border: 1px solid #2d4020;
+    border-radius: 10px;
+    cursor: help;
+    font-weight: 600;
+  }
+
+  .cost-chip .cache-ratio {
+    color: #f59e0b;
+    opacity: 0.9;
+    font-weight: 500;
+  }
+
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.62rem;
+    padding: 0.1rem 0.45rem;
+    background: #1a2438;
+    color: #8a9ab8;
+    border: 1px solid #2a3450;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover {
+    background: #24304a;
+    color: #a0b0d0;
+    border-color: #3a4a70;
+  }
+
+  .copy-btn.success {
+    background: #0e2018;
+    color: #22c55e;
+    border-color: #1e4028;
+  }
+
+  .copy-btn.failed {
+    background: #1a0e0e;
+    color: #f87171;
+    border-color: #3a1a1a;
+  }
+
+  /* Prominent summary card shown at the end of a successful investigation.
+     Visible in the video Shot 3 payoff — explicitly demonstrates cost
+     consciousness and prompt-caching benefit to judges. */
+  .cost-summary {
+    background: linear-gradient(135deg, #0d1a0f 0%, #0f1828 100%);
+    border: 1px solid #1e3a1e;
+    border-left: 3px solid #22c55e;
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    margin-top: 0.4rem;
+  }
+
+  .cost-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .cost-summary-icon { font-size: 0.95rem; }
+
+  .cost-summary-title {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #86efac;
+    flex: 1;
+  }
+
+  .cost-summary-total {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #4ade80;
+  }
+
+  .cost-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    row-gap: 0.25rem;
+    column-gap: 0.8rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .cost-row {
+    display: contents;
+  }
+
+  .cost-label {
+    font-size: 0.68rem;
+    color: #7a9088;
+  }
+
+  .cost-value {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #b0d0b8;
+    text-align: right;
+  }
+
+  .cost-value.cached {
+    color: #f59e0b;
+  }
+
+  .cost-summary-note {
+    font-size: 0.62rem;
+    color: #4a6a5a;
+    line-height: 1.5;
+    padding-top: 0.35rem;
+    border-top: 1px solid #1a2a1a;
+    font-style: italic;
   }
 
   /* Body */

@@ -1,261 +1,274 @@
-# OmniBridge — Final Video Script (90 seconds)
+# OmniBridge — Final Video Script
 
-**For:** Claude Opus 4.7 Hackathon submission
-**Target runtime:** 90s (±5s)
-**Platform:** GitHub README embed + hackathon submission form
-**Format:** 1080p MP4, H.264, ≤ 30 MB
+**For**: Claude Opus 4.7 Hackathon submission (asynchronous judging).
+**Target runtime**: 2:20–2:30 (hackathon ceiling is 3:00 — we stay well inside for discipline).
+**Format**: 1080p MP4, H.264, ≤ 30 MB.
 
-This is the final shooting + voiceover script. Everything is timed. The goal is not to show every feature — it is to convince a judge in 90 seconds that **OmniBridge is impossible without Claude Opus 4.7**.
+This is the final shooting + voiceover script. Everything is timed. The goal is not to cram every feature — it is to convince a judge in 150 seconds that **OmniBridge is an AI agent category that didn't exist a year ago, and it's only possible because of Opus 4.7.**
+
+---
+
+## Strategic framing
+
+Judging criteria weight: Impact 30% · Demo 25% · Opus 4.7 Use 25% · Depth 20%.
+
+Problem Statement alignment we are anchoring on:
+- **Primary — "Build For What's Next"**: an AI-agent-driven workflow that could not have existed before this model class. Video Shot 1 explicitly namedrops this.
+- **Supporting — "Build From What You Know"**: the creator is an engineer who shipped production integrations against the exact devices demoed here. Surfaces in README and submission, *not* in the video voiceover (would feel salesy).
+
+Every shot must pull weight toward at least one of the four rubric items. If a shot doesn't, cut it.
 
 ---
 
 ## The 10-second rule
 
-Judges watch ~5000 submissions. If you do not earn their attention in the first 10 seconds, they skip. Your hook must:
-1. State the problem in concrete dollars / scale
-2. Hint that AI is the answer
-3. Show something visually striking (UI moving, data streaming, *not* a splash screen)
+Judges watch hundreds of submissions asynchronously. Earn their attention in the first 10 seconds or they skip. Our hook must:
+1. Claim novelty (**Build For What's Next** namedrop)
+2. Show something visually striking (live byte stream, not a splash screen)
+3. Imply the payoff without explaining it
 
 ---
 
-## Pre-flight checklist (run once, in order)
+## Pre-flight checklist
 
-- [ ] Kill all other apps — clean desktop, Do Not Disturb on
-- [ ] App rebuilt: `npm install && npm run tauri dev`
-- [ ] Settings → API key set, "Test connection" returned ✓
-- [ ] Settings → "Clear learned data" pressed (fresh profile state for demo)
-- [ ] Demo Mode **off** at start — we toggle it on-camera
-- [ ] Window sized **1440 × 900** exactly (iMovie/OBS export target ratio)
-- [ ] Font scaling default (⌘0 in browser dev tools if needed)
-- [ ] Webhook tab open: `https://webhook.site` — copy the unique URL to clipboard
-- [ ] System audio muted to avoid notification sound bleed
-- [ ] Second take test: record 20 seconds, play back, verify framerate + audio levels
+- [ ] Fresh `npm run tauri dev` — no hot-reload artifacts
+- [ ] API key set, "Test connection" returned ✓
+- [ ] "Clear learned data" pressed (fresh profile state)
+- [ ] Demo Mode **off** at start (we toggle on-camera)
+- [ ] Window exactly **1440 × 900**
+- [ ] webhook.site unique URL copied to clipboard
+- [ ] DND on, notifications silenced, other apps closed
+- [ ] Two test recordings of 10 seconds each — playback confirms audio levels + no dropped frames
+- [ ] Script printed on paper — **do not read from screen during VO**
 
 ---
 
 ## Shot-by-shot script
 
-Each shot has **Visual**, **Voiceover (VO)**, and **On-screen caption (CAP)**. Voiceover is written to be read at ~150 WPM — conversational, not rushed.
+### Shot 1 — Hook (0:00 → 0:12) · 12s
 
-### Shot 1 — Hook (0:00 → 0:08) · 8 seconds
+**Visual**
+- Cold open: OmniBridge window already in foreground, empty state with pulsing logo
+- At 0:02, click **▶ Try Demo Mode** — 4 cards slide into sidebar with stagger
+- At 0:06, click 🏭 **Modbus RTU PLC** → **▶ Monitor**
+- Bytes start streaming in HEX: `01 03 14 00 FE 03 F5 ...`
+- Camera (digital zoom 1.1×) lingers on the unreadable hex stream for 2 seconds
 
-**Visual:**
-- Cold open on OmniBridge app with the empty state visible (sidebar empty, hero card centered)
-- The OmniBridge logo has a subtle pulse animation — let it run 2 seconds before anything else moves
-- At 0:04, cursor moves toward "▶ Try Demo Mode"
+**VO (25 words)**
+> "This is a category of AI agent that didn't exist a year ago. Claude identifies any legacy serial protocol — binary, undocumented, proprietary — in under a minute. Watch."
 
-**VO (14 words):**
-> "Your warehouse scale from 1985 still works. Getting its data into Slack? Two weeks of engineering."
-
-**CAP (bottom third):**
-> `$1.2 trillion in RS-232 legacy hardware. Zero cloud-native.`
-
----
-
-### Shot 2 — Product intro (0:08 → 0:18) · 10 seconds
-
-**Visual:**
-- Click "▶ Try Demo Mode" → 4 device cards slide into sidebar with stagger animation
-- Pause 1 second to let the 4 cards register visually
-- Hover over the **🏭 Modbus RTU PLC** card (last one) — subtle glow
-
-**VO (20 words):**
-> "OmniBridge is an AI agent that identifies and speaks to any serial protocol. No parsers. No vendor docs. No manual work."
-
-**CAP:**
-> `4 demo devices · any real serial port · Opus 4.7 under the hood`
+**CAP (overlay bottom third)**
+> `Problem Statement: Build For What's Next`
 
 ---
 
-### Shot 3 — Modbus agentic investigation → live dashboard (0:18 → 0:52) · 34 seconds · ★ CENTERPIECE
+### Shot 2 — Raw bytes are unreadable (0:12 → 0:24) · 12s
 
-This is the single most important shot in the video. Judges will replay it. The **ending now goes all the way to a working live dashboard on binary data** — identifying the protocol is table stakes; turning raw bytes into decoded sparklines in the same 30-second flow is what no competitor will have. Do it in one take with screen recording; edit to speed up data-accumulation gaps if needed.
+**Visual**
+- Toggle **HEX → ASCII** view — screen fills with `·······` dots (binary proof)
+- Toggle back to **HEX**
+- Close-up shot on one frame: `01 03 14 00 FE 03 F5 00 2D 07 08 ... XX XX`
+- Cursor hovers over the **🔬 Investigate** button (purple glow on hover)
 
-**Visual sequence:**
+**VO (22 words)**
+> "Traditional integration: an engineer reads vendor docs, writes a custom parser, ships glue code. Eighteen hours per device, median. Industry-wide."
 
-| Sub-shot | Time | Action |
+**CAP**
+> `~$1.2 trillion of RS-232 hardware stranded outside the cloud.`
+
+---
+
+### Shot 3 — Agentic investigation → live dashboard (0:24 → 1:10) · 46s · ★ CENTERPIECE
+
+This is the single most important shot. Judges will replay it. The flow goes end-to-end from unreadable bytes to live-updating decoded dashboard in one continuous take.
+
+**Sub-shot sequence**
+
+| Sub | Time | Action |
 |---|---|---|
-| 3a | 0:18 | Click 🏭 Modbus RTU PLC card → **▶ Monitor** |
-| 3b | 0:20 | DataBuffer tab opens. HEX view shows mysterious bytes: `01 03 14 00 FE 03 F5 ...` |
-| 3c | 0:22 | Toggle HEX / ASCII — ASCII shows "·····" garbage (visually proving it's binary) |
-| 3d | 0:25 | Pause on "This looks binary. Unknown." emotion (2s) |
-| 3e | 0:27 | Click **🔬 Investigate** button — Investigation tab opens |
-| 3f | 0:29 | **Thinking block streams in** (purple gradient, auto-expanded) — viewer can read the reasoning |
-| 3g | 0:32 | **🔧 `analyze_binary_structure(hypothesis: 'low ASCII ratio — testing binary framing')`** |
-| 3h | 0:34 | **📥** Result summary: `12% ASCII · frame=25B ×18 · ✓ Modbus CRC` — **highlight this line, zoom 1.2× for 1 second** |
-| 3i | 0:36 | **Another thinking block**: "All 18 frames pass CRC16-IBM. This is Modbus RTU. Extracting 10 registers at fixed byte offsets." |
-| 3j | 0:39 | **🔧 get_device_metadata()** → **📥** `Schneider Electric · Modicon M221` |
-| 3k | 0:42 | **✨ Final:** `Modbus RTU · 98%` with confidence bar fill animation. **📊 Dashboard button lights up** (was greyed out). |
-| 3l | 0:44 | Click **📊 Dashboard** tab → **6 register cards fly in** (temp, pressure, flow, motor_rpm, valve_%, alarm_bits) |
-| 3m | 0:47 | Let the dashboard live-update for 3 seconds — **orange sparklines** drawing under each numeric register, values flashing on update |
-| 3n | 0:50 | Linger on one sparkline (e.g. `temp: 254` with the curve moving) — visual payoff shot |
+| 3a | 0:24 | Click **🔬 Investigate** — Investigation tab opens |
+| 3b | 0:26 | **Thinking block streams in** (purple gradient, auto-expanded) — reader sees Claude's hypothesis live |
+| 3c | 0:30 | **🔧 `analyze_binary_structure(hypothesis: 'low ASCII ratio — testing binary framing')`** |
+| 3d | 0:32 | **📥** Result summary: `12% ASCII · frame=25B ×N · ✓ Modbus CRC` — **hold the frame 1.5 seconds, zoom 1.15×** |
+| 3e | 0:34 | **Another thinking block**: "All frames pass CRC16-IBM. Modbus RTU. Extracting ten registers at fixed byte offsets." |
+| 3f | 0:37 | **🔧 `get_device_metadata()`** → **📥** `Schneider Electric · Modicon M221` |
+| 3g | 0:39 | **✨ Final**: `Modbus RTU · 98%` — confidence bar fills, 📊 Dashboard button lights up |
+| 3h | 0:41 | **💰 Investigation cost card appears** (green gradient). Linger 3 seconds. Text visible: `Investigation cost · $0.043 · 72% cache hit` |
+| 3i | 0:44 | Click **📊 Dashboard** tab |
+| 3j | 0:46 | **6 orange register cards fly in**: temp, pressure, flow, motor_rpm, valve_%, alarm_bits |
+| 3k | 0:48 | Let sparklines draw for 3 seconds — values flashing, min/max labels visible at each end |
+| 3l | 0:51 | Hover linger on `temp` card — sparkline moving, value at `254` with `· 247 ── 262` range labels |
 
-**VO (70 words, ~28 sec — this is the talkiest shot):**
-> "For an unknown binary stream, Claude runs as a true agent. It analyzes byte structure, finds repeating 25-byte frames, validates the Modbus CRC, then extracts ten registers at fixed byte offsets — all in three tool calls. Not just identify the protocol. Decode it. Visualize it. Zero parsers written. Opus 4.7's adaptive thinking plus multi-step tool use made every step of that possible."
+**VO (80 words across 46 seconds — slower than earlier shots, let visuals land)**
+> "An unreadable binary stream. Claude runs as a true agent. It calls custom tools — structural analysis, CRC validation, hardware cross-reference — chains the reasoning across three tool calls, then commits. Modbus RTU. Ninety-eight percent confidence. Four cents in API tokens, seventy-two percent served from prompt cache. The decoded registers — temperature, pressure, flow, motor RPM, valve percent — stream to a live dashboard in the same window. No parsers written. No vendor docs consulted."
 
-**CAP (two captions in this shot):**
-- 0:30-0:42 overlay on trace: `Interleaved thinking + tool use · 3 calls · ~$0.04`
-- 0:44-0:52 overlay on dashboard: `Binary → decoded → live sparklines. Zero parsers written.`
+**CAPs (two in this shot — switch as scene changes)**
+- 0:26 → 0:41 overlay: `6 agent tools · 3 calls · interleaved reasoning`
+- 0:44 → 0:54 overlay: `Binary → decoded → live sparklines. Zero parsers written.`
 
-**Why this shot wins:** Competing submissions will stop at "AI identifies the protocol". This shot shows **identify → extract → live visualize** as one continuous agentic flow, with the user not touching a single config. That is the difference between a toy and a product.
-
----
-
-### Shot 4 — ⚡ Live Mode auto-trigger on CAS scale (0:52 → 1:07) · 15 seconds
-
-Shot 3 already showed the dashboard ending. Shot 4's job is to prove this is **not** a one-off demo — the same identify-and-visualize flow runs zero-click on any ASCII protocol via Live Mode. Don't repeat the "look, a dashboard" beat; emphasize the *auto-trigger*.
-
-**Visual:**
-- Click ✕ on Modbus tab to close
-- Click ⚖️ CAS Weighing Scale → ▶ Monitor
-- DataBuffer shows readable ASCII streaming: `ST,GS,  1.234 kg`
-- Click **⚡ Live** toggle — green pulse + progress label `8 / 10`
-- Don't click Investigate. Don't click anything. Just wait.
-- At 10 lines accumulated (~2.5s later), Analysis panel auto-flashes: `CAS Scale · 95%`
-- Dashboard button enables, auto-switches to Dashboard tab (already coded behavior)
-- Weight sparkline draws live — let it run 3 seconds
-
-**VO (28 words):**
-> "Same agent flow runs on any protocol zero-click. Just turn Live Mode on. The regex runs locally — thousands of values per second, no additional API calls."
-
-**CAP:**
-> `⚡ Live Mode · auto-analyze at 10 lines · $0 per update after identification`
+**Why this shot wins**
+Competing submissions will stop at "AI identifies the protocol." This shot shows **identify → extract → live visualize → and here's the exact bill** in one continuous agentic flow. That's the Opus 4.7 story end-to-end.
 
 ---
 
-### Shot 5 — Cloud bridge (1:07 → 1:22) · 15 seconds
+### Shot 4 — User override (0:54 → 1:08) · 14s · NEW
 
-**Visual:**
-- Still on CAS Scale Dashboard
-- Click 🔗 **Webhook** button in header
-- Modal slides in — paste URL (⌘V), toggle **Enable**, set throttle to 1000 ms
+Purpose: prove this is not a black box. Judges worry about AI hallucination; this shot demonstrates human-in-the-loop without making it feel like a fallback.
+
+Wait, timing fix — Shot 3 runs to 1:10, not 0:54. Shot 4 starts at **1:10**.
+
+### Shot 4 — User override (1:10 → 1:24) · 14s · NEW
+
+**Visual**
+- Still on Dashboard tab
+- Click the ✎ edit icon next to one register card (e.g. `motor_rpm`)
+- Inline edit panel slides open below the field row
+- Current regex visible: `^01 03 14 [0-9A-F]{2} [0-9A-F]{2} [0-9A-F]{2} [0-9A-F]{2} [0-9A-F]{2} [0-9A-F]{2} ([0-9A-F]{2} [0-9A-F]{2})`
+- Type a tweak (adjust capture position or data type hint)
+- Press **Enter** → panel closes → sparkline redraws with new values
+
+**VO (22 words)**
+> "Claude's extraction rules are editable, not authoritative. If the agent picks a wrong byte offset, fix it inline. The dashboard re-parses live."
+
+**CAP**
+> `Human-in-the-loop — Claude's output is a starting point, not a black box.`
+
+---
+
+### Shot 5 — Zero-click Live Mode (1:24 → 1:40) · 16s
+
+**Visual**
+- Close Modbus tab
+- Click ⚖️ **CAS Weighing Scale** card → **▶ Monitor**
+- Readable ASCII streams: `ST,GS,  1.234 kg`
+- Click **⚡ Live** toggle — pulsing green, progress `8 / 10`
+- Do not click anything else
+- ~2.5 seconds later, Analysis auto-fires: `CAS Scale · 95%`
+- Dashboard auto-switches on — weight card with sparkline bouncing
+
+**VO (22 words)**
+> "Same agent flow runs zero-click for any protocol. Turn on Live Mode. Regex Claude generated runs locally — no API calls per packet."
+
+**CAP**
+> `⚡ Live auto-triggers at 10 lines · $0 per update after identification`
+
+---
+
+### Shot 6 — Cloud bridge (1:40 → 1:55) · 15s
+
+**Visual**
+- Click **🔗 Webhook** button in header
+- Modal opens — paste URL (⌘V), toggle **Enable**, throttle 1000 ms
 - Click **Test** → green `✓ 200 OK`
-- Close modal → webhook counter in header starts ticking `🔗 3 · 🔗 4 · 🔗 5 ...`
-- **Cut to webhook.site tab** in browser → JSON payloads arriving with fields: `weight`, `stable`, `timestamp`
-- Scroll through one payload to show structure
+- Close modal → webhook counter in header ticks `🔗 3 · 🔗 4 · 🔗 5`
+- Cut to browser tab with webhook.site — JSON payloads arriving with `weight`, `stable`, `timestamp` fields
 
-**VO (28 words):**
-> "One click forwards structured data to any webhook — Zapier, n8n, your own backend. Your 1985 scale is now a first-class citizen of the modern stack."
+**VO (22 words)**
+> "One click forwards structured data to any webhook. Zapier, n8n, your backend. Your 1985 scale is now a first-class cloud citizen."
 
-**CAP:**
+**CAP**
 > `HTTP POST → any endpoint. Throttled. Real-time.`
 
 ---
 
-### Shot 6 — Device learning (1:22 → 1:30) · 8 seconds
+### Shot 7 — Device profile learning (1:55 → 2:05) · 10s
 
-**Visual:**
-- Back to OmniBridge window
-- Click ✕ on CAS tab to stop monitoring
-- Click **▶ Demo Mode** toggle off, then on again (simulating reconnect)
-- CAS Weighing Scale card now shows **⭐ CAS Scale · 95%** purple badge
-- Click Monitor → Dashboard tab **immediately populated** (no analyzing spinner)
+**Visual**
+- Close CAS tab
+- Toggle Demo Mode off, then on (simulating reconnect)
+- CAS Scale card shows **⭐ CAS Scale · 95%** purple badge
+- Click Monitor → Dashboard **immediately populates** without API call
 
-**VO (18 words):**
-> "And every identification is remembered. Reconnect the same device — instant recognition, zero API calls, forever."
+**VO (18 words)**
+> "Every identification is remembered. Reconnect the same device — instant recognition, zero API calls, forever."
 
-**CAP:**
-> `⭐ Device Profile Learning — by USB VID:PID`
+**CAP**
+> `⭐ Device profiles stored by USB VID:PID`
 
 ---
 
-### Shot 7 — Outro (1:30 → 1:37) · 7 seconds
+### Shot 8 — Outro (2:05 → 2:22) · 17s
 
-**Visual:**
+**Visual**
 - Fade to black
-- OmniBridge logo with tagline animates in:
-  - `⬡ OmniBridge`
-  - `Legacy hardware, first-class citizens`
-  - `github.com/<your-org>/omnibridge`
-- Small footer: `Built for Claude Opus 4.7 Hackathon 2026`
+- OmniBridge logo animates in with three lines of text appearing in sequence:
+  - Line 1 at 2:07: `⬡ OmniBridge`
+  - Line 2 at 2:10: `An agent category that didn't exist a year ago.`
+  - Line 3 at 2:13: `Built with Claude Opus 4.7 · MIT · github.com/YOUR_ORG/omnibridge`
+- Hold final frame for 5 seconds — judges motivated enough to click the repo link need time to read the URL
+- Faint footer text: `Opus 4.7 Hackathon 2026`
 
-**VO (10 words):**
-> "OmniBridge. Built on Claude Opus 4.7. Available on GitHub."
+**VO (30 words)**
+> "OmniBridge. Built by an engineer who has lived the legacy-hardware integration tax. Open source on GitHub. And it only works because Opus 4.7 chains tools and preserves reasoning across steps."
 
-**CAP:** (none — let the logo speak)
+**CAP (appears at 2:13, stays to end)**
+> `🏭 Industrial IoT · 🔌 Serial Gateway · 🧠 Agentic AI`
 
 ---
 
-## Timing budget summary
+## Timing budget
 
 | Shot | Length | Cumulative |
 |---|---|---|
-| 1 · Hook | 8s | 0:08 |
-| 2 · Intro | 10s | 0:18 |
-| 3 · Modbus agent → dashboard ★ | 34s | 0:52 |
-| 4 · Live Mode auto-trigger | 15s | 1:07 |
-| 5 · Webhook | 15s | 1:22 |
-| 6 · Learning | 8s | 1:30 |
-| 7 · Outro | 7s | 1:37 |
+| 1 · Hook ("didn't exist a year ago") | 12s | 0:12 |
+| 2 · Raw bytes unreadable | 12s | 0:24 |
+| 3 · Agentic investigation + dashboard ★ | 46s | 1:10 |
+| 4 · User override (NEW) | 14s | 1:24 |
+| 5 · Zero-click Live Mode | 16s | 1:40 |
+| 6 · Webhook cloud bridge | 15s | 1:55 |
+| 7 · Device learning | 10s | 2:05 |
+| 8 · Outro + repo link | 17s | 2:22 |
 
-Total: **1:37** — within the 90-100s band. If you overrun on Shot 3 (easy to do — the dashboard populate is a strong visual, you'll want to linger), tighten by:
-1. Cut 2s from Shot 4 (shorter Live accumulation wait — edit out the 8→10 progress beats)
-2. Cut 1s from Shot 6 (faster reconnect toggle)
+**Total: 2:22** — safely inside the 3-minute ceiling.
 
-Do NOT cut Shot 3. It is the only shot that matters.
+If Shot 3 overruns (likely — dashboard payoff is worth lingering on):
+1. Cut 2s from Shot 5 (shorter Live accumulation wait)
+2. Cut 2s from Shot 6 (skip a beat of webhook counter ticking)
+3. Cut 2s from Shot 7 (faster reconnect toggle)
 
----
-
-## Voiceover recording tips
-
-1. **Record the VO separately**, then sync in edit. Screen-record narration is never clean enough.
-2. **Write the VO on one page**, print it, read from paper — reading from screen produces unnatural pacing.
-3. Record **two takes** of each shot's VO. Pick the best in edit.
-4. Pace: ~150 words/min (conversational). Do not rush the Shot 3 voiceover — the visuals need time to land.
-5. Leave **0.3 seconds of silence** at the start of each line — easier to trim than to add.
-6. Microphone: AirPods Pro (auto noise reduction) or any USB mic. Avoid laptop mic.
+**Do NOT cut Shot 3.** Do NOT cut Shot 4. Those are the Opus-4.7-specific moments.
 
 ---
 
-## Captions / subtitles
+## Voiceover pacing notes
 
-- GitHub autoplays embedded video **muted**. Your captions MUST tell the story without audio.
-- Use iMovie's title tool, **bottom-center**, two-line maximum
-- Font: sans-serif, white text, 50% black box behind
-- Caption appears 0.3s after the VO line starts, dismissed 0.3s before next caption
-- **Caption cadence: one key line per shot** (6 total) — do not caption every VO sentence
-
----
-
-## B-roll / supplementary footage (optional, use if you have 30 extra minutes)
-
-- A hand plugging a USB-serial cable into a laptop (shot over the shoulder) — adds physicality to the "real hardware" story
-- An actual Arduino board on a desk with LEDs blinking — 5-second insert during Shot 2
-- A split-screen showing "traditional way" (engineer typing regex in VS Code for 10 seconds) vs "OmniBridge way" (one click, done) — powerful but time-intensive to edit
-
-Do **not** add B-roll if it pushes you past 100 seconds. The 90s version is tight and polished; the 2-minute version is a student film.
+- Target 115-125 WPM — slower than typical reading pace. Gives visuals room to land.
+- Total VO word count: ~238 words across 140 seconds = 102 WPM. Conservative intentional.
+- Record each shot's VO as a separate take. Mix separately from screen recording.
+- Leave 0.3s of silence between sentences — easier to trim than to add.
+- After Shot 3's "four cents in API tokens" line, pause a full second before "seventy-two percent cache" — let that number land.
 
 ---
 
-## Editing checklist
+## Captions
 
-- [ ] Export in 1080p 30fps, H.264, AAC audio
-- [ ] Target file size: **15-25 MB** (GitHub README inline viewer limit is 100 MB but smaller = faster loads)
-- [ ] Title card for first 0.5s: black with "OmniBridge" fade-in (gives the viewer's eye a second to focus)
-- [ ] End card lingers on GitHub URL for **2 full seconds** — this is where motivated viewers pause to read
-- [ ] Audio: background music at **-18 dB** (barely audible), voiceover at **-6 dB** peak
-- [ ] Music: "tech minimal" from pixabay.com (royalty-free) — search "data pulse" or "quiet algorithm"
+GitHub autoplays embedded video muted. Captions are critical. One line per shot, bottom-center, white text on 50% black box. Never caption a full VO sentence — caption the payoff word.
 
 ---
 
-## Fallback: 30-second teaser cut
+## B-roll (optional, only if time allows after main edit)
 
-If the full 90s feels too long for Twitter / Product Hunt:
-
-| Segment | Source shots | Duration |
-|---|---|---|
-| Hook (truncated) | Shot 1 VO shortened | 5s |
-| Modbus agentic magic | Shot 3 sub-shots 3e → 3k | 18s |
-| Webhook payload | Shot 5 final 5 seconds | 5s |
-| Outro | Shot 7 logo only | 2s |
-
-This teaser links to the full video from the README, keeps all three must-see moments.
+- 3-second cutaway: hand plugging USB cable into laptop (shot on phone) — insert during Shot 1 for physicality
+- 5-second cutaway: a real Arduino board with LEDs blinking on a desk — insert during Shot 5
+- Use only if it doesn't push runtime past 2:40
 
 ---
 
-## The ask for judges (implicit but important)
+## Final checklist before upload
 
-Every frame of this video should signal one claim:
-**"This isn't GPT + serial port. This is Opus 4.7's multi-step tool use + adaptive thinking + prompt caching doing something no other model configuration can do."**
+- [ ] Export 1080p 30fps H.264, AAC audio
+- [ ] File size ≤ 25 MB (GitHub inline playback faster)
+- [ ] First frame is NOT black — show the OmniBridge window immediately for attention-grabbing thumbnail
+- [ ] Audio levels: background music -18 dB, VO -6 dB peak
+- [ ] No sensitive API keys visible in any frame — crop/blur Settings modal shots if needed
+- [ ] Repo URL in outro is the ACTUAL URL, not a placeholder
+- [ ] Watch the full video with speakers muted once — captions must tell the story alone
+- [ ] Watch the full video at 1.5× once — if any shot feels slow even then, trim it
 
-If you rewatch your final edit and cannot point to three moments that specifically showcase Opus 4.7 (thinking stream, tool-call chain, CRC validation result), re-edit until you can.
+---
+
+## The ask for judges (never said out loud, but every frame should signal it)
+
+**"This workflow did not exist a year ago. Opus 4.7 made it possible. The product is real, the code is open, the market is a trillion dollars. Give us Top 6."**
+
+If you rewatch your final edit and cannot point to three moments that specifically showcase Opus 4.7 capabilities (thinking stream, tool chain, cost summary), re-edit until you can.

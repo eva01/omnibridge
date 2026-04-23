@@ -9,8 +9,10 @@
     analyzeWithAgent,
     friendlyError,
     type ProtocolAnalysis,
+    type AnalysisField,
     type AgentStep,
     type AgentResult,
+    type UsageStats,
   } from '$lib/claude.js';
   import type { DiscoveredDevice } from '$lib/types.js';
   import AgentTracePanel from '$lib/AgentTracePanel.svelte';
@@ -74,6 +76,7 @@
   let agentError = $state<string | null>(null);
   let agentApiCalls = $state(0);
   let agentStoppedAt = $state<'end_turn' | 'max_steps' | 'error' | null>(null);
+  let agentUsage = $state<UsageStats | null>(null);
 
   // ── Webhook output ───────────────────────────────────────────────────────
   let showWebhookModal = $state(false);
@@ -302,6 +305,19 @@
     liveAnalysis = false; // closing panel also disables live
   }
 
+  /** Merge a manual field override from the AnalysisPanel. Triggers the live
+   *  dashboard to re-parse with the user's regex instead of Claude's. We also
+   *  re-persist the profile so the edit sticks across reconnects. */
+  function handleFieldEdit(fieldName: string, patch: Partial<AnalysisField>) {
+    if (!analysisResult) return;
+    const updatedFields = analysisResult.fields.map((f) =>
+      f.name === fieldName ? { ...f, ...patch } : f
+    );
+    analysisResult = { ...analysisResult, fields: updatedFields };
+    // Propagate to parent so the device profile is updated and persisted
+    onAnalysisComplete?.(analysisResult);
+  }
+
   async function runInvestigation() {
     if (lines.length === 0 || investigating) return;
     showAnalysis = true;
@@ -311,6 +327,7 @@
     agentError = null;
     agentApiCalls = 0;
     agentStoppedAt = null;
+    agentUsage = null;
     analysisError = null;
 
     const result: AgentResult = await analyzeWithAgent(
@@ -322,6 +339,7 @@
 
     agentApiCalls = result.total_api_calls;
     agentStoppedAt = result.stopped_at;
+    agentUsage = result.usage;
 
     if (result.analysis) {
       analysisResult = result.analysis;
@@ -368,7 +386,7 @@
         class="ctrl-btn analyze"
         onclick={runAnalysis}
         disabled={analysisLoading || lines.length === 0}
-        title="One-shot analysis with Claude"
+        title="⬡ Analyze — Fast one-shot (~5s, 1 API call). Best for clearly structured ASCII protocols where the pattern is already visible in the buffer (CAS scale, NMEA GPS, key=value CSV)."
       >
         {#if analysisLoading}
           <span class="spin-sm">◌</span> Analyzing…
@@ -380,7 +398,7 @@
         class="ctrl-btn investigate"
         onclick={runInvestigation}
         disabled={investigating || lines.length === 0}
-        title="Multi-step agentic investigation with tool use"
+        title="🔬 Investigate — Multi-step agent (~15-30s, 2-5 API calls). Claude uses tools to probe frame structure, validate CRCs, cross-reference hardware VID/PID. Use for binary protocols (Modbus RTU) or unknown streams."
       >
         {#if investigating}
           <span class="spin-sm">◌</span> Investigating…
@@ -549,6 +567,7 @@
               error={analysisError}
               recognized={isRecognized}
               sampleCount={recognizedSampleCount}
+              onFieldEdit={handleFieldEdit}
             />
           {:else if bottomTab === 'dashboard'}
             <StructuredDashboard
@@ -562,6 +581,7 @@
               error={agentError}
               apiCalls={agentApiCalls}
               stoppedAt={agentStoppedAt}
+              usage={agentUsage}
             />
           {/if}
         </div>

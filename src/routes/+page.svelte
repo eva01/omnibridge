@@ -15,6 +15,7 @@
   import DataBuffer from "$lib/DataBuffer.svelte";
   import SettingsModal from "$lib/SettingsModal.svelte";
   import { getAllProfiles, saveProfile, type DeviceProfile } from "$lib/profiles.js";
+  import { getApiKey } from "$lib/settings.js";
   import type { ProtocolAnalysis } from "$lib/claude.js";
   import {
     allDemoDevices,
@@ -49,6 +50,13 @@
 
   let showSettings = $state(false);
   let demoActive = $state(false);
+  /** true when no API key is configured — hints first-time users toward Settings */
+  let needsApiKey = $state(false);
+
+  async function refreshApiKeyStatus() {
+    const key = await getApiKey();
+    needsApiKey = !key;
+  }
   /** port → interval id for demo generators */
   let demoIntervals: Record<string, ReturnType<typeof setInterval>> = {};
 
@@ -240,6 +248,7 @@
   // ── Lifecycle: auto-discover on launch + bind shortcuts ──────────────────
   onMount(() => {
     discoverDevices();
+    refreshApiKeyStatus();
     document.addEventListener("keydown", handleKeydown);
     return () => document.removeEventListener("keydown", handleKeydown);
   });
@@ -345,6 +354,16 @@
             Claude automatically identifies your device's protocol, parses<br />
             the data, and forwards structured values to any webhook endpoint.
           </p>
+          {#if needsApiKey}
+            <button class="api-key-hint" onclick={() => (showSettings = true)} type="button">
+              <span class="hint-icon">🔑</span>
+              <span class="hint-text">
+                <strong>First time here?</strong>
+                Add your Anthropic API key to unlock AI protocol detection →
+              </span>
+              <span class="hint-arrow">⚙</span>
+            </button>
+          {/if}
           <div class="cta-row">
             <button class="cta-btn primary" onclick={discoverDevices} disabled={scanning}>
               {scanning ? "Scanning…" : "⊕ Discover Devices"}
@@ -430,7 +449,7 @@
 </div>
 
 {#if showSettings}
-  <SettingsModal onClose={() => (showSettings = false)} />
+  <SettingsModal onClose={() => { showSettings = false; refreshApiKeyStatus(); }} />
 {/if}
 
 <!-- Toast stack -->
@@ -764,6 +783,48 @@
   }
 
   .empty-state strong { color: #a78bfa; }
+
+  /* Proactive onboarding banner — shown only when API key is missing.
+     Sits between the intro paragraph and CTA buttons so new users see it
+     before clicking anything that requires the key. */
+  .api-key-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0.4rem 0 0.8rem;
+    padding: 0.55rem 0.9rem;
+    background: linear-gradient(90deg, #2a1e42 0%, #1f1d3a 100%);
+    border: 1px solid #4a3870;
+    border-radius: 8px;
+    color: #d8b4fe;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.2s;
+    animation: hintPulse 2.4s ease-in-out infinite;
+    max-width: 460px;
+  }
+
+  .api-key-hint:hover {
+    transform: translateY(-1px);
+    border-color: #7854b8;
+    box-shadow: 0 4px 18px -6px rgba(168, 85, 247, 0.4);
+  }
+
+  .api-key-hint .hint-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .api-key-hint .hint-text { flex: 1; }
+  .api-key-hint .hint-text strong { color: #fff; margin-right: 0.3rem; }
+  .api-key-hint .hint-arrow {
+    font-size: 1rem;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  @keyframes hintPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.0); }
+    50%      { box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.08); }
+  }
 
   .cta-row {
     display: flex;

@@ -2,10 +2,9 @@
 
 # ⬡ OmniBridge
 
-### **Intelligent Serial Gateway**
+### **An AI agent category that didn't exist a year ago.**
 
-**The first AI agent that identifies and speaks to legacy serial devices autonomously.**
-Bridge `$1.2T` of RS-232-era industrial equipment into the modern API economy.
+OmniBridge identifies any legacy serial device protocol — binary, undocumented, proprietary — in under a minute. It is what industrial integration looks like once models can reason about raw bytes.
 
 ![Claude Opus 4.7](https://img.shields.io/badge/Claude-Opus%204.7-D97706?logo=anthropic)
 ![Tauri](https://img.shields.io/badge/Tauri-2.0-24C8DB?logo=tauri)
@@ -15,12 +14,22 @@ Bridge `$1.2T` of RS-232-era industrial equipment into the modern API economy.
 <!-- ![CI](https://github.com/YOUR_ORG/omnibridge/actions/workflows/ci.yml/badge.svg) -->
 ![29 tests](https://img.shields.io/badge/tests-29%20passing-22c55e)
 
-*Built for the Claude Opus 4.7 Hackathon 2026*
+*Built for the Claude Opus 4.7 Hackathon 2026 · Problem Statement: **Build For What's Next***
 
-<!-- Replace with real screenshot: 1400×800 capture of the app with CAS scale monitoring + Dashboard tab + Investigation trace visible -->
+<!-- Replace with real screenshot: 1400×800 capture of the app with Modbus investigation + live Dashboard + cost summary card visible -->
 <!-- ![OmniBridge Hero](docs/hero.png) -->
 
 </div>
+
+---
+
+## Why this exists
+
+I work as a backend engineer on IoT systems, including industrial weighing scales (timbangan). I have shipped the kind of custom parser OmniBridge replaces — spent days reverse-engineering vendor protocols that didn't match their own documentation, written glue code nobody else will ever touch. The legacy-hardware integration tax is real and I have paid it.
+
+When Opus 4.7 shipped with multi-turn tool use and adaptive extended thinking, I realized the shortcut I had wanted for years was finally buildable. So I built it.
+
+This is **Build From What You Know** meeting **Build For What's Next**: a real problem I have lived, solved by a model capability class that emerged this year.
 
 ---
 
