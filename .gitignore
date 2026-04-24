@@ -11,3 +11,7 @@ vite.config.ts.timestamp-*
 
 # Claude Code local settings (per-developer, not for commit)
 .claude/
+
+# Private working docs (video script, submission pitch) — kept local for
+# production + submission, not committed to public repo
+/private/

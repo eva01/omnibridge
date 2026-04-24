@@ -62,9 +62,9 @@ Initial release for the Claude Opus 4.7 Hackathon 2026.
 
 ### Documentation
 - `README.md` with architecture diagram, "Why Opus 4.7" capability table, and full feature list
-- `docs/VIDEO_SCRIPT_FINAL.md` — shot-by-shot 90-second demo script with voiceover timing
+- `docs/DEMO_DRILL.md` — reproducible testing checklist for the Modbus agent flow
 - `docs/DEMO_SCRIPT.md` — earlier pre-flight and recording checklist
-- `docs/SUBMISSION.md` — hackathon submission pitch, copy-paste-ready for form fields
 - `docs/RELEASE_GUIDE.md` — how to produce signed DMG/MSI/AppImage artifacts
+- `docs/RELEASE_NOTES_0.1.0.md` — release notes for the 0.1.0 tag
 
 [0.1.0]: https://github.com/adindamochamad/omnibridge/releases/tag/v0.1.0
