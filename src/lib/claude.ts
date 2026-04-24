@@ -153,6 +153,107 @@ export function resetClient() {
   _clientKey = '';
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  ASK MODE — free-form Q&A over the live buffer
+// ═══════════════════════════════════════════════════════════════════════════
+
+const SYSTEM_PROMPT_ASK = `You are an assistant answering questions about a live serial device data stream in OmniBridge.
+
+You are given:
+- Recent raw bytes from a serial port (as hex + ASCII)
+- The current protocol identification (if any) with fields and notes
+- The user's question
+
+Be concise — 1-3 short paragraphs. Cite actual values, timestamps, hex bytes, or field names from the data when helpful. Think of this as giving a quick technical answer to a colleague who is already looking at the same dashboard.
+
+If the data is insufficient to answer, say so honestly — do not invent patterns.
+
+Do NOT repeat the raw hex back at the user; they see it already. Synthesize.
+
+Respond in plain text. No markdown headers, no code fences unless showing an actual byte sequence. Keep output under ~150 words.`;
+
+export interface AskContext {
+  question: string;
+  lines: DataLine[];
+  analysis: ProtocolAnalysis | null;
+  /** Prior Q&A turns for continuity (oldest first) */
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+}
+
+export async function askAboutBuffer(
+  ctx: AskContext,
+  onChunk?: (chunk: string) => void
+): Promise<string> {
+  const apiKey = await getApiKey();
+  if (!apiKey) throw new Error('API key not configured. Open Settings to add one.');
+
+  const client = getClient(apiKey);
+
+  // Take last 80 lines as context — enough to answer most questions, small
+  // enough to keep latency low and cost reasonable.
+  const recent = ctx.lines.slice(-80);
+  const bufferText = recent
+    .map((l) => {
+      const ts = new Date(l.timestamp).toISOString().slice(11, 23);
+      return `[${ts}] HEX: ${l.hex.slice(0, 120)}${l.hex.length > 120 ? '…' : ''}  ASCII: ${l.ascii.slice(0, 60)}`;
+    })
+    .join('\n');
+
+  const analysisContext = ctx.analysis
+    ? `PROTOCOL: ${ctx.analysis.protocol} (${ctx.analysis.confidence}% confidence)
+DEVICE: ${ctx.analysis.device_hint || 'unknown'}
+FIELDS: ${ctx.analysis.fields.map((f) => `${f.name}${f.unit ? ` [${f.unit}]` : ''}`).join(', ') || '(none extracted)'}
+NOTES: ${ctx.analysis.notes || '(none)'}`
+    : 'No protocol identification yet — user has not yet run Analyze or Investigate.';
+
+  const userContent = `${analysisContext}
+
+RECENT BUFFER (${recent.length} lines, most recent last):
+${bufferText}
+
+USER QUESTION: ${ctx.question}`;
+
+  // Build message list with prior Q&A history for conversational continuity
+  const messages: Anthropic.Messages.MessageParam[] = [];
+  if (ctx.history) {
+    for (const turn of ctx.history) {
+      messages.push({ role: turn.role, content: turn.content });
+    }
+  }
+  messages.push({ role: 'user', content: userContent });
+
+  const stream = client.messages.stream({
+    model: 'claude-opus-4-7',
+    max_tokens: 1024,
+    thinking: { type: 'adaptive' },
+    system: [
+      {
+        type: 'text',
+        text: SYSTEM_PROMPT_ASK,
+        // @ts-ignore — cache_control not in older type defs
+        cache_control: { type: 'ephemeral' },
+      },
+    ],
+    messages,
+  });
+
+  let fullText = '';
+  for await (const event of stream) {
+    if (
+      event.type === 'content_block_delta' &&
+      'delta' in event &&
+      event.delta &&
+      (event.delta as { type?: string }).type === 'text_delta'
+    ) {
+      const chunk = (event.delta as { text: string }).text;
+      fullText += chunk;
+      onChunk?.(chunk);
+    }
+  }
+
+  return fullText.trim();
+}
+
 /** Turn SDK / network errors into short, user-readable strings.
  *  Anthropic SDK throws structured errors with `.status`; generic failures
  *  come through as strings or Error instances. Judges/users shouldn't have

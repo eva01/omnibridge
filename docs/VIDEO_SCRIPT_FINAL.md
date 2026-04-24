@@ -47,17 +47,18 @@ Judges watch hundreds of submissions asynchronously. Earn their attention in the
 
 ### Shot 1 — Hook (0:00 → 0:12) · 12s
 
-**Visual**
-- Cold open: OmniBridge window already in foreground, empty state with pulsing logo
-- At 0:02, click **▶ Try Demo Mode** — 4 cards slide into sidebar with stagger
-- At 0:06, click 🏭 **Modbus RTU PLC** → **▶ Monitor**
-- Bytes start streaming in HEX: `01 03 14 00 FE 03 F5 ...`
-- Camera (digital zoom 1.1×) lingers on the unreadable hex stream for 2 seconds
+**Visual (over-shoulder B-roll + app)**
+- 0:00 — Quick 2-second B-roll: hand picks up a USB-to-serial cable from a messy desk of old hardware. Visible objects: Arduino board, old weighing scale, faded cable with FTDI adapter. No words yet. Just texture and objects.
+- 0:02 — Cut to laptop screen: cable plugs into USB port.
+- 0:03 — Cut to OmniBridge empty state, pulsing logo. Cursor moves to **▶ Try Demo Mode**.
+- 0:05 — Click → 4 device cards slide in.
+- 0:07 — Click 🏭 **Modbus RTU PLC** → **▶ Monitor**.
+- 0:09 — HEX bytes streaming: `01 03 14 00 FE 03 F5 ...` — digital zoom 1.1× lingers 2 seconds on the unreadable stream.
 
-**VO (25 words)**
-> "This is a category of AI agent that didn't exist a year ago. Claude identifies any legacy serial protocol — binary, undocumented, proprietary — in under a minute. Watch."
+**VO (29 words — emotional + personal + pivoting to the claim)**
+> "Your grandfather's weighing scale. The Arduino in your drawer. The lab instrument that still runs on Windows XP. They work perfectly. None of them talk to the cloud. Until now."
 
-**CAP (overlay bottom third)**
+**CAP (overlay bottom third, appears at 0:08)**
 > `Problem Statement: Build For What's Next`
 
 ---
@@ -134,7 +135,34 @@ The "surgical agent" framing is more impressive than "chatty multi-tool chain":
 
 ---
 
-### Shot 5 — Zero-click Live Mode (1:14 → 1:30) · 16s
+### Shot 4.5 — Ask Claude about the live data (1:14 → 1:29) · 15s · NEW
+
+Purpose: surface a **second, completely different Opus 4.7 use case** in the same app — free-form natural-language Q&A over time-series bytes. This is our strongest play for the **Most Creative Opus 4.7 Exploration** prize and reinforces the Keep Thinking angle.
+
+**Visual**
+- Still inside the same Modbus monitoring tab
+- Click the **🤖 Ask** button in the header (or the Ask sub-tab)
+- Chat panel opens with empty state + 5 suggested question chips
+- Click the chip: **"What was the highest value in the last minute?"**
+- User message appears in chat bubble
+- Claude's response streams in character-by-character with a typing cursor `▊`
+- Response cites specific values and timestamps: *"Reg3 peaked at 2,085 around 15:24:18 — consistent with normal slow drift. All five registers stayed within 1% of their running means; no outlier frames."*
+- Linger on the response for 2 seconds
+
+**VO (24 words — conversational, no tech jargon)**
+> "One more capability. Ask Claude anything about the live data — values, trends, anomalies. The answer cites real bytes from the stream, not generic text."
+
+**CAP (overlay during streaming response)**
+> `Natural-language Q&A over live serial bytes · second Opus 4.7 use case`
+
+**Why this shot pays off**
+- Judges have seen multi-tool agents before. They have *not* seen one that also pivots to conversational Q&A over the same data context — same app, same Claude session, different interaction mode.
+- The typing-cursor streaming effect is visually satisfying and signals "real-time LLM."
+- Broadens the audience story: OmniBridge is not just for binary-protocol-literate engineers; anyone can ask questions in plain English.
+
+---
+
+### Shot 5 — Zero-click Live Mode (1:29 → 1:45) · 16s
 
 **Visual**
 - Close Modbus tab
@@ -153,7 +181,7 @@ The "surgical agent" framing is more impressive than "chatty multi-tool chain":
 
 ---
 
-### Shot 6 — Cloud bridge (1:30 → 1:45) · 15s
+### Shot 6 — Cloud bridge (1:45 → 2:00) · 15s
 
 **Visual**
 - Click **🔗 Webhook** button in header
@@ -170,7 +198,7 @@ The "surgical agent" framing is more impressive than "chatty multi-tool chain":
 
 ---
 
-### Shot 7 — Device profile learning (1:45 → 1:55) · 10s
+### Shot 7 — Device profile learning (2:00 → 2:10) · 10s
 
 **Visual**
 - Close CAS tab
@@ -186,7 +214,7 @@ The "surgical agent" framing is more impressive than "chatty multi-tool chain":
 
 ---
 
-### Shot 8 — Outro (1:55 → 2:10) · 15s
+### Shot 8 — Outro (2:10 → 2:25) · 15s
 
 **Visual**
 - Fade to black
@@ -209,16 +237,17 @@ The "surgical agent" framing is more impressive than "chatty multi-tool chain":
 
 | Shot | Length | Cumulative |
 |---|---|---|
-| 1 · Hook ("didn't exist a year ago") | 12s | 0:12 |
+| 1 · Hook (emotional + personal) | 12s | 0:12 |
 | 2 · Raw bytes unreadable | 12s | 0:24 |
 | 3 · Surgical agentic investigation + dashboard ★ | 34s | 0:58 |
-| 4 · User override | 16s | 1:14 |
-| 5 · Zero-click Live Mode | 16s | 1:30 |
-| 6 · Webhook cloud bridge | 15s | 1:45 |
-| 7 · Device learning | 10s | 1:55 |
-| 8 · Outro + repo link | 15s | 2:10 |
+| 4 · User override (editable extractors) | 16s | 1:14 |
+| 4.5 · Ask Claude (chat Q&A) — NEW | 15s | 1:29 |
+| 5 · Zero-click Live Mode | 16s | 1:45 |
+| 6 · Webhook cloud bridge | 15s | 2:00 |
+| 7 · Device learning | 10s | 2:10 |
+| 8 · Outro + repo link | 15s | 2:25 |
 
-**Total: 2:10** — well inside the 3-minute ceiling. Tight pacing is a signal of editorial discipline to async judges watching at 1× speed.
+**Total: 2:25** — safely inside the 3-minute ceiling, with the chat Q&A shot as the second Opus 4.7 use case (Most Creative Exploration prize candidate).
 
 If Shot 3 overruns (dashboard payoff often tempts lingering):
 1. Cut 2s from Shot 5 (shorter Live accumulation wait)
@@ -232,7 +261,7 @@ If Shot 3 overruns (dashboard payoff often tempts lingering):
 ## Voiceover pacing notes
 
 - Target 115-125 WPM — slower than typical reading pace. Gives visuals room to land.
-- Total VO word count: ~225 words across 130 seconds = 104 WPM. Conservative intentional.
+- Total VO word count: ~249 words across 145 seconds = 103 WPM. Conservative intentional.
 - Record each shot's VO as a separate take. Mix separately from screen recording.
 - Leave 0.3s of silence between sentences — easier to trim than to add.
 - After Shot 3's "twenty cents in tokens" line, pause a full second before "five decoded registers" — let the price point land before pivoting to the payoff.

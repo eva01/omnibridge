@@ -16,6 +16,7 @@
   } from '$lib/claude.js';
   import type { DiscoveredDevice } from '$lib/types.js';
   import AgentTracePanel from '$lib/AgentTracePanel.svelte';
+  import ChatPanel, { type ChatMessage } from '$lib/ChatPanel.svelte';
   import CommandSender from '$lib/CommandSender.svelte';
   import { profileToAnalysis, type DeviceProfile } from '$lib/profiles.js';
   import { compileFields, parseStream, latest } from '$lib/parser.js';
@@ -67,8 +68,11 @@
   let isRecognized = $state(false);
   let recognizedSampleCount = $state(0);
 
-  // Bottom panel tabs: "detective" (AI analysis) or "dashboard" (structured live values) or "investigation" (agent trace)
-  let bottomTab = $state<'detective' | 'dashboard' | 'investigation'>('detective');
+  // Bottom panel tabs: detective (analysis) · dashboard (live values) · investigation (agent trace) · ask (Q&A chat)
+  let bottomTab = $state<'detective' | 'dashboard' | 'investigation' | 'ask'>('detective');
+
+  // Chat Q&A history per-port (persists while DataBuffer is mounted)
+  let chatHistory = $state<ChatMessage[]>([]);
 
   // ── Agent investigation state ────────────────────────────────────────────
   let investigating = $state(false);
@@ -452,6 +456,14 @@
         {/if}
       </button>
       <button
+        class="ctrl-btn ask"
+        onclick={() => { showAnalysis = true; bottomTab = 'ask'; }}
+        disabled={lines.length === 0}
+        title="🤖 Ask — Free-form Q&A over the live buffer. Ask Claude questions in natural language — values, trends, anomalies, structure."
+      >
+        🤖 Ask
+      </button>
+      <button
         class="ctrl-btn send"
         class:active={showSender}
         onclick={() => (showSender = !showSender)}
@@ -629,6 +641,17 @@
               <span class="tab-count">{agentTrace.length}</span>
             {/if}
           </button>
+          <button
+            class="bt-tab"
+            class:active={bottomTab === 'ask'}
+            onclick={() => (bottomTab = 'ask')}
+            title="Ask Claude natural-language questions about the live data"
+          >
+            🤖 Ask
+            {#if chatHistory.length > 0}
+              <span class="tab-count">{Math.floor(chatHistory.length / 2)}</span>
+            {/if}
+          </button>
           <div class="bt-spacer"></div>
           <button class="bt-close" onclick={closeAnalysis} title="Hide panel">✕</button>
         </div>
@@ -655,6 +678,12 @@
               apiCalls={agentApiCalls}
               stoppedAt={agentStoppedAt}
               usage={agentUsage}
+            />
+          {:else if bottomTab === 'ask'}
+            <ChatPanel
+              bind:history={chatHistory}
+              {lines}
+              analysis={analysisResult}
             />
           {/if}
         </div>

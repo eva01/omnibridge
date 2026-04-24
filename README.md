@@ -24,11 +24,21 @@ OmniBridge identifies any legacy serial device protocol — binary, undocumented
 
 ## Why this exists
 
-I work as a backend engineer on IoT systems, including industrial weighing scales (timbangan). I have shipped the kind of custom parser OmniBridge replaces — spent days reverse-engineering vendor protocols that didn't match their own documentation, written glue code nobody else will ever touch. The legacy-hardware integration tax is real and I have paid it.
+I work as a backend engineer on IoT systems, including industrial weighing scales (*timbangan*). I have shipped the kind of custom parser OmniBridge replaces — spent days reverse-engineering vendor protocols that didn't match their own documentation, written glue code nobody else will ever touch. The legacy-hardware integration tax is real and I have paid it.
 
-When Opus 4.7 shipped with multi-turn tool use and adaptive extended thinking, I realized the shortcut I had wanted for years was finally buildable. So I built it.
+But this is not a tool just for industrial engineers. The day I first got OmniBridge working on a Modbus PLC demo, I realized the same thirty-second flow would work on:
 
-This is **Build From What You Know** meeting **Build For What's Next**: a real problem I have lived, solved by a model capability class that emerged this year.
+- Any **Arduino project** that talks over Serial
+- Any **scientific instrument** with a serial data port (oscilloscopes, spectrometers, bioreactors)
+- Any **vintage device** from the RS-232 era still quietly running in warehouses, labs, and basements
+- Any **debug port** on a router, modem, or embedded board
+- Any **student project** for an embedded systems or IoT class
+
+Anyone who has ever typed `screen /dev/tty.usbmodem` and stared at unreadable bytes has encountered the problem OmniBridge solves.
+
+When Opus 4.7 shipped with multi-turn tool use, adaptive extended thinking, and a 1M-token context window, I realized the shortcut I had wanted for years was finally buildable. So I built it — across an industrial-to-maker-to-academic spectrum of use cases, not one narrow vertical.
+
+This is **Build From What You Know** meeting **Build For What's Next**: a problem category I have lived, addressable by a model capability class that emerged this year, relevant to tens of millions of people with a USB-to-serial cable in a drawer.
 
 ---
 
