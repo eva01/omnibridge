@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getApiKey, setApiKey, clearApiKey } from '$lib/settings.js';
-  import { getAllProfiles } from '$lib/profiles.js';
+  import { getAllProfiles, clearAllProfiles } from '$lib/profiles.js';
   import Anthropic from '@anthropic-ai/sdk';
 
   let { onClose }: { onClose: () => void } = $props();
@@ -78,12 +78,53 @@
     }
   }
 
+  // Inline 2-step confirmation — Tauri v2's webview does not reliably show
+  // the browser `confirm()` dialog, so we use "click again within 4s" instead.
+  let keyConfirmPending = $state(false);
+  let keyConfirmTimer: ReturnType<typeof setTimeout> | null = null;
+
   async function handleClearKey() {
-    if (!confirm('Remove stored API key? You will need to re-enter it.')) return;
+    if (!keyConfirmPending) {
+      keyConfirmPending = true;
+      if (keyConfirmTimer) clearTimeout(keyConfirmTimer);
+      keyConfirmTimer = setTimeout(() => (keyConfirmPending = false), 4000);
+      return;
+    }
+    if (keyConfirmTimer) clearTimeout(keyConfirmTimer);
+    keyConfirmPending = false;
     await clearApiKey();
     apiKey = '';
     keySource = 'none';
     testResult = null;
+  }
+
+  let clearingProfiles = $state(false);
+  let profilesCleared = $state(false);
+  let profilesConfirmPending = $state(false);
+  let profilesConfirmTimer: ReturnType<typeof setTimeout> | null = null;
+
+  async function handleClearProfiles() {
+    if (profileCount === 0) return;
+    if (!profilesConfirmPending) {
+      profilesConfirmPending = true;
+      if (profilesConfirmTimer) clearTimeout(profilesConfirmTimer);
+      profilesConfirmTimer = setTimeout(
+        () => (profilesConfirmPending = false),
+        4000
+      );
+      return;
+    }
+    if (profilesConfirmTimer) clearTimeout(profilesConfirmTimer);
+    profilesConfirmPending = false;
+    clearingProfiles = true;
+    try {
+      await clearAllProfiles();
+      profileCount = 0;
+      profilesCleared = true;
+      setTimeout(() => (profilesCleared = false), 2500);
+    } finally {
+      clearingProfiles = false;
+    }
   }
 
   function handleBackdrop(e: MouseEvent) {
@@ -167,7 +208,13 @@
             {saving ? 'Saving…' : 'Save'}
           </button>
           {#if keySource === 'store'}
-            <button class="btn ghost-danger" onclick={handleClearKey}>Clear</button>
+            <button
+            class="btn ghost-danger"
+            class:pending-confirm={keyConfirmPending}
+            onclick={handleClearKey}
+          >
+            {keyConfirmPending ? 'Click again' : 'Clear'}
+          </button>
           {/if}
         </div>
       </section>
@@ -188,6 +235,25 @@
           <div class="stat-help">
             Profiles are stored automatically after each successful protocol analysis (≥55% confidence).
           </div>
+        </div>
+        <div class="actions-row">
+          <button
+            class="btn ghost-danger"
+            class:pending-confirm={profilesConfirmPending}
+            onclick={handleClearProfiles}
+            disabled={profileCount === 0 || clearingProfiles}
+            title="Remove all learned device profiles — useful before demo recording or stress testing"
+          >
+            {#if clearingProfiles}
+              Clearing…
+            {:else if profilesCleared}
+              ✓ Cleared
+            {:else if profilesConfirmPending}
+              Click again to confirm
+            {:else}
+              Clear learned data
+            {/if}
+          </button>
         </div>
       </section>
 
@@ -387,6 +453,18 @@
   .btn.ghost-danger { background: transparent; color: #f87171; }
   .btn.ghost-danger:hover { background: #2a1414; }
 
+  .btn.pending-confirm {
+    background: #2a1414 !important;
+    color: #fca5a5 !important;
+    border-color: #7a2424 !important;
+    animation: confirmPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes confirmPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+    50%      { box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.15); }
+  }
+
   .divider {
     height: 1px;
     background: #1a2038;
@@ -402,6 +480,12 @@
     border: 1px solid #1e2a40;
     padding: 0.7rem 0.9rem;
     border-radius: 8px;
+  }
+
+  .actions-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
   }
 
   .stat-big {

@@ -78,46 +78,45 @@ Judges watch hundreds of submissions asynchronously. Earn their attention in the
 
 ---
 
-### Shot 3 — Agentic investigation → live dashboard (0:24 → 1:10) · 46s · ★ CENTERPIECE
+### Shot 3 — Surgical agentic investigation → live dashboard (0:24 → 0:58) · 34s · ★ CENTERPIECE
 
-This is the single most important shot. Judges will replay it. The flow goes end-to-end from unreadable bytes to live-updating decoded dashboard in one continuous take.
+This is the single most important shot. The flow goes end-to-end from unreadable bytes to decoded live dashboard in one continuous take. **Empirically verified behavior**: Claude calls exactly one purpose-built tool — `analyze_binary_structure` — and that one tool returns enough evidence (CRC match + frame autocorrelation + sample frames) to commit. Narrative pivots on **surgical efficiency**, not tool-chain length.
 
 **Sub-shot sequence**
 
 | Sub | Time | Action |
 |---|---|---|
-| 3a | 0:24 | Click **🔬 Investigate** — Investigation tab opens |
-| 3b | 0:26 | **Thinking block streams in** (purple gradient, auto-expanded) — reader sees Claude's hypothesis live |
-| 3c | 0:30 | **🔧 `analyze_binary_structure(hypothesis: 'low ASCII ratio — testing binary framing')`** |
-| 3d | 0:32 | **📥** Result summary: `12% ASCII · frame=25B ×N · ✓ Modbus CRC` — **hold the frame 1.5 seconds, zoom 1.15×** |
-| 3e | 0:34 | **Another thinking block**: "All frames pass CRC16-IBM. Modbus RTU. Extracting ten registers at fixed byte offsets." |
-| 3f | 0:37 | **🔧 `get_device_metadata()`** → **📥** `Schneider Electric · Modicon M221` |
-| 3g | 0:39 | **✨ Final**: `Modbus RTU · 98%` — confidence bar fills, 📊 Dashboard button lights up |
-| 3h | 0:41 | **💰 Investigation cost card appears** (green gradient). Linger 3 seconds. Text visible: `Investigation cost · $0.043 · 72% cache hit` |
-| 3i | 0:44 | Click **📊 Dashboard** tab |
-| 3j | 0:46 | **6 orange register cards fly in**: temp, pressure, flow, motor_rpm, valve_%, alarm_bits |
-| 3k | 0:48 | Let sparklines draw for 3 seconds — values flashing, min/max labels visible at each end |
-| 3l | 0:51 | Hover linger on `temp` card — sparkline moving, value at `254` with `· 247 ── 262` range labels |
+| 3a | 0:24 | Click **🔬 Investigate** — Investigation tab opens automatically |
+| 3b | 0:26 | **Thinking block streams in** (purple gradient, auto-expanded). Content mentions "hypothesize Modbus RTU framing: slave 1, FC 3, 10 registers × 2 bytes + CRC" |
+| 3c | 0:30 | **🔧 `analyze_binary_structure`** called with the specific Modbus hypothesis as input |
+| 3d | 0:32 | **📥** Result summary in trace: `13% ASCII · frame=25B ×21 · ✓ Modbus CRC` — **hold the frame 1.5 seconds, zoom 1.15×** (this is the single most judge-visible payoff) |
+| 3e | 0:35 | **Second thinking block / text block**: "Strong Modbus RTU match — 21 of 21 frames pass CRC16. Emit five fields with byte-offset regex." |
+| 3f | 0:39 | **✨ Final**: `Modbus RTU · 98%` — confidence bar fills, 📊 Dashboard button lights up |
+| 3g | 0:41 | **💰 Investigation cost card appears** (green gradient). Linger 3 seconds. Text visible: `Investigation cost · ~$0.22 · 65% cache hit` |
+| 3h | 0:44 | Click **📊 Dashboard** tab |
+| 3i | 0:46 | **5 orange register cards fly in**: reg0, reg1, reg2, reg3, reg4 — with live numeric values (e.g. `57`, `926`, `138`, `2085`, `81`) |
+| 3j | 0:50 | Let sparklines draw for 3 seconds — values flashing, min/max labels visible at each end |
+| 3k | 0:53 | Hover-linger on `reg1` card — sparkline moving, value in 900s range with `916 ── 930` labels |
+| 3l | 0:56 | Quick pan to Investigation tab to show the small `💰 ~$0.22 · 65% cache` chip in header — reinforces cost narrative before cutting |
 
-**VO (80 words across 46 seconds — slower than earlier shots, let visuals land)**
-> "An unreadable binary stream. Claude runs as a true agent. It calls custom tools — structural analysis, CRC validation, hardware cross-reference — chains the reasoning across three tool calls, then commits. Modbus RTU. Ninety-eight percent confidence. Four cents in API tokens, seventy-two percent served from prompt cache. The decoded registers — temperature, pressure, flow, motor RPM, valve percent — stream to a live dashboard in the same window. No parsers written. No vendor docs consulted."
+**VO (68 words across 34 seconds — deliberately slower pace, let visuals breathe)**
+> "An unreadable binary stream. Claude makes one surgical move — calls analyze_binary_structure with a specific Modbus hypothesis. The tool validates CRC16 across twenty-one consecutive frames and returns frame structure. One tool call. Two API requests. About twenty cents in tokens. Five decoded registers stream to a live dashboard in the same window. No parsers written. No vendor docs consulted."
 
-**CAPs (two in this shot — switch as scene changes)**
-- 0:26 → 0:41 overlay: `6 agent tools · 3 calls · interleaved reasoning`
-- 0:44 → 0:54 overlay: `Binary → decoded → live sparklines. Zero parsers written.`
+**CAPs (two overlays in this shot)**
+- 0:28 → 0:42 overlay: `One purpose-built tool · 21/21 frames pass CRC16`
+- 0:44 → 0:58 overlay: `Binary → decoded → live sparklines. Zero parsers written.`
 
 **Why this shot wins**
-Competing submissions will stop at "AI identifies the protocol." This shot shows **identify → extract → live visualize → and here's the exact bill** in one continuous agentic flow. That's the Opus 4.7 story end-to-end.
+
+The "surgical agent" framing is more impressive than "chatty multi-tool chain":
+- **Efficiency as signal of intelligence**: a good engineer picks the right tool once; a novice calls many.
+- **Cost honest + compelling**: twenty cents for what used to take 18 hours of engineering. The ratio is the story.
+- **Verifiable via Copy JSON**: judges who click 📋 Copy JSON see the exact 2-API-call, 1-tool trace. What the video claims matches reality exactly.
+- Competing submissions stop at "AI identifies the protocol." This shot shows **identify → decode → visualize → and here's the verified bill** in one continuous flow.
 
 ---
 
-### Shot 4 — User override (0:54 → 1:08) · 14s · NEW
-
-Purpose: prove this is not a black box. Judges worry about AI hallucination; this shot demonstrates human-in-the-loop without making it feel like a fallback.
-
-Wait, timing fix — Shot 3 runs to 1:10, not 0:54. Shot 4 starts at **1:10**.
-
-### Shot 4 — User override (1:10 → 1:24) · 14s · NEW
+### Shot 4 — User override (0:58 → 1:14) · 16s · NEW
 
 **Visual**
 - Still on Dashboard tab
@@ -135,7 +134,7 @@ Wait, timing fix — Shot 3 runs to 1:10, not 0:54. Shot 4 starts at **1:10**.
 
 ---
 
-### Shot 5 — Zero-click Live Mode (1:24 → 1:40) · 16s
+### Shot 5 — Zero-click Live Mode (1:14 → 1:30) · 16s
 
 **Visual**
 - Close Modbus tab
@@ -154,7 +153,7 @@ Wait, timing fix — Shot 3 runs to 1:10, not 0:54. Shot 4 starts at **1:10**.
 
 ---
 
-### Shot 6 — Cloud bridge (1:40 → 1:55) · 15s
+### Shot 6 — Cloud bridge (1:30 → 1:45) · 15s
 
 **Visual**
 - Click **🔗 Webhook** button in header
@@ -171,7 +170,7 @@ Wait, timing fix — Shot 3 runs to 1:10, not 0:54. Shot 4 starts at **1:10**.
 
 ---
 
-### Shot 7 — Device profile learning (1:55 → 2:05) · 10s
+### Shot 7 — Device profile learning (1:45 → 1:55) · 10s
 
 **Visual**
 - Close CAS tab
@@ -187,7 +186,7 @@ Wait, timing fix — Shot 3 runs to 1:10, not 0:54. Shot 4 starts at **1:10**.
 
 ---
 
-### Shot 8 — Outro (2:05 → 2:22) · 17s
+### Shot 8 — Outro (1:55 → 2:10) · 15s
 
 **Visual**
 - Fade to black
@@ -199,7 +198,7 @@ Wait, timing fix — Shot 3 runs to 1:10, not 0:54. Shot 4 starts at **1:10**.
 - Faint footer text: `Opus 4.7 Hackathon 2026`
 
 **VO (30 words)**
-> "OmniBridge. Built by an engineer who has lived the legacy-hardware integration tax. Open source on GitHub. And it only works because Opus 4.7 chains tools and preserves reasoning across steps."
+> "OmniBridge. Built by an engineer who has lived the legacy-hardware integration tax. Open source on GitHub. And it only works because Opus 4.7 can reason from raw bytes, pick a purpose-built tool, and commit — surgically."
 
 **CAP (appears at 2:13, stays to end)**
 > `🏭 Industrial IoT · 🔌 Serial Gateway · 🧠 Agentic AI`
@@ -212,16 +211,16 @@ Wait, timing fix — Shot 3 runs to 1:10, not 0:54. Shot 4 starts at **1:10**.
 |---|---|---|
 | 1 · Hook ("didn't exist a year ago") | 12s | 0:12 |
 | 2 · Raw bytes unreadable | 12s | 0:24 |
-| 3 · Agentic investigation + dashboard ★ | 46s | 1:10 |
-| 4 · User override (NEW) | 14s | 1:24 |
-| 5 · Zero-click Live Mode | 16s | 1:40 |
-| 6 · Webhook cloud bridge | 15s | 1:55 |
-| 7 · Device learning | 10s | 2:05 |
-| 8 · Outro + repo link | 17s | 2:22 |
+| 3 · Surgical agentic investigation + dashboard ★ | 34s | 0:58 |
+| 4 · User override | 16s | 1:14 |
+| 5 · Zero-click Live Mode | 16s | 1:30 |
+| 6 · Webhook cloud bridge | 15s | 1:45 |
+| 7 · Device learning | 10s | 1:55 |
+| 8 · Outro + repo link | 15s | 2:10 |
 
-**Total: 2:22** — safely inside the 3-minute ceiling.
+**Total: 2:10** — well inside the 3-minute ceiling. Tight pacing is a signal of editorial discipline to async judges watching at 1× speed.
 
-If Shot 3 overruns (likely — dashboard payoff is worth lingering on):
+If Shot 3 overruns (dashboard payoff often tempts lingering):
 1. Cut 2s from Shot 5 (shorter Live accumulation wait)
 2. Cut 2s from Shot 6 (skip a beat of webhook counter ticking)
 3. Cut 2s from Shot 7 (faster reconnect toggle)
@@ -233,10 +232,10 @@ If Shot 3 overruns (likely — dashboard payoff is worth lingering on):
 ## Voiceover pacing notes
 
 - Target 115-125 WPM — slower than typical reading pace. Gives visuals room to land.
-- Total VO word count: ~238 words across 140 seconds = 102 WPM. Conservative intentional.
+- Total VO word count: ~225 words across 130 seconds = 104 WPM. Conservative intentional.
 - Record each shot's VO as a separate take. Mix separately from screen recording.
 - Leave 0.3s of silence between sentences — easier to trim than to add.
-- After Shot 3's "four cents in API tokens" line, pause a full second before "seventy-two percent cache" — let that number land.
+- After Shot 3's "twenty cents in tokens" line, pause a full second before "five decoded registers" — let the price point land before pivoting to the payoff.
 
 ---
 

@@ -25,21 +25,21 @@ Supporting: **Build From What You Know** — built by an engineer who has shippe
 
 > OmniBridge is an AI agent that identifies unknown serial device protocols autonomously — a workflow that didn't exist a year ago because it needs Opus 4.7's specific capabilities to work.
 >
-> Plug in a 1980s weighing scale, a Modbus PLC, or an Arduino sensor. OmniBridge runs Claude as a true multi-step agent: it calls six custom tools, validates CRC16 checksums on binary frames, cross-references USB hardware IDs, and commits to an identification with confidence. Every reasoning step streams live. Once identified, Claude-generated regex runs locally at thousands of packets per second with zero ongoing API cost.
+> Plug in a 1980s weighing scale, a Modbus PLC, or an Arduino sensor. OmniBridge runs Claude as a multi-step agent with six purpose-built tools — for binary streams, one surgical call to `analyze_binary_structure` validates CRC16 across every frame and returns frame structure, enough evidence to commit with high confidence. Every reasoning step streams live. Once identified, Claude-generated regex (ASCII) or byte-offset extractors (binary) run locally at thousands of packets per second, zero ongoing API cost.
 >
 > Traditional protocol integration: engineer reads vendor docs, writes custom parser, ships glue code — eighteen hours median per device. OmniBridge: five minutes. For $1.2 trillion of legacy industrial hardware stranded outside the cloud, that speedup opens entire new markets.
 >
-> This couldn't work with a smaller model. Adaptive extended thinking lets Claude spend more compute on binary protocols vs ASCII. Multi-turn tool use with preserved reasoning lets the agent chain hypotheses. Prompt caching cuts cost to $0.04 per investigation, making live auto-analysis economically viable.
+> This couldn't work with a smaller model. Adaptive thinking lets Claude spend more compute on binary vs ASCII. Multi-turn tool use with preserved reasoning lets the agent pick a surgical tool and commit. Prompt caching delivers ~65% cache hit on repeat investigations, keeping cost near $0.20 per identification — roughly one-thousandth of the engineer time replaced.
 >
 > Open source, MIT licensed, native desktop app on macOS/Windows/Linux.
 
-**Word count: 198** ✓
+**Word count: 196** ✓ within 100-200 band
 
 ---
 
 ## Elevator Pitch (30-second spoken version)
 
-> OmniBridge is an AI agent that autonomously identifies any legacy serial device protocol. Plug in a 1980s weighing scale or a binary Modbus PLC — twenty seconds and four cents later, Claude Opus 4.7 has validated CRC checksums, extracted fields at fixed byte offsets, and piped live data to your webhook. Eighteen-hour integrations become five minutes. And it only works because Opus 4.7 chains tools and preserves reasoning across steps — a category that didn't exist before this year.
+> OmniBridge is an AI agent that autonomously identifies any legacy serial device protocol. Plug in a 1980s weighing scale or a binary Modbus PLC — fifteen seconds and about twenty cents later, Claude Opus 4.7 has validated CRC checksums across every frame, extracted fields at fixed byte offsets, and piped live data to your webhook. Eighteen-hour integrations become five minutes. And it only works because Opus 4.7 can pick a purpose-built tool and commit surgically — a category that didn't exist before this year.
 
 ---
 
@@ -79,7 +79,7 @@ Supporting: **Build From What You Know** — built by an engineer who has shippe
 - **Target users**: industrial automation engineers, IoT integrators, lab technicians, maker community
 - **Market size**: $1.2 trillion in RS-232-era installed base; over 3 billion serial devices shipped since 1969
 - **Time saved per device**: median 18 hours → 5 minutes (216× improvement)
-- **Cost per identification**: ~$0.04 in API tokens vs ~$1,800 in engineer time (conservative $100/hour rate)
+- **Cost per identification**: ~$0.20 in API tokens (verified empirically on Modbus PLC demo, 65% prompt-cache hit ratio) vs ~$1,800 in engineer time at $100/hour rate — roughly 9,000× cheaper per device
 - **Personal validation**: I have lived the integration-tax pain on real timbangan (industrial weighing scales) in production. OmniBridge is the tool I needed.
 
 ---

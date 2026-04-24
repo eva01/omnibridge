@@ -96,6 +96,14 @@ export async function deleteProfile(fingerprint: string): Promise<void> {
   await store.save();
 }
 
+/** Remove every learned device profile. Used by Settings → "Clear learned
+ *  data" and by demo recording to guarantee a fresh first-run experience. */
+export async function clearAllProfiles(): Promise<void> {
+  const store = await getStore();
+  await store.set(KEY_PROFILES, {});
+  await store.save();
+}
+
 /** Convert a stored profile back to a ProtocolAnalysis shape for UI display. */
 export function profileToAnalysis(p: DeviceProfile): ProtocolAnalysis {
   return {

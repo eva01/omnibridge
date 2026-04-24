@@ -78,6 +78,51 @@
   let agentStoppedAt = $state<'end_turn' | 'max_steps' | 'error' | null>(null);
   let agentUsage = $state<UsageStats | null>(null);
 
+  // ── Resizable split ──────────────────────────────────────────────────────
+  /** Percent of vertical space given to the top buffer; the analysis panel
+   *  fills the rest. User can drag the handle between them to resize. */
+  let bufferPercent = $state(55);
+  let isResizing = $state(false);
+  let contentEl = $state<HTMLDivElement | null>(null);
+
+  function startResize(e: MouseEvent) {
+    e.preventDefault();
+    isResizing = true;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', onResize);
+    window.addEventListener('mouseup', stopResize);
+  }
+
+  function onResize(e: MouseEvent) {
+    if (!contentEl) return;
+    const rect = contentEl.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const pct = (y / rect.height) * 100;
+    bufferPercent = Math.max(15, Math.min(85, pct));
+  }
+
+  function stopResize() {
+    isResizing = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    window.removeEventListener('mousemove', onResize);
+    window.removeEventListener('mouseup', stopResize);
+  }
+
+  function handleResizeKeydown(e: KeyboardEvent) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      bufferPercent = Math.max(15, bufferPercent - 3);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      bufferPercent = Math.min(85, bufferPercent + 3);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      bufferPercent = 55; // reset to default
+    }
+  }
+
   // ── Webhook output ───────────────────────────────────────────────────────
   let showWebhookModal = $state(false);
   let webhookConfig = $state<WebhookConfig | null>(null);
@@ -481,7 +526,13 @@
   </div>
 
   <!-- Buffer + Analysis split -->
-  <div class="buffer-content" class:split={showAnalysis}>
+  <div
+  class="buffer-content"
+  class:split={showAnalysis}
+  class:resizing={isResizing}
+  style="--buffer-pct: {bufferPercent}%"
+  bind:this={contentEl}
+>
     {#if showSender}
       <CommandSender
         {port}
@@ -521,6 +572,28 @@
     </div>
 
     {#if showAnalysis}
+      <!-- Drag handle to resize buffer vs analysis panel.
+           Focusable separator per ARIA spec — with aria-valuenow + keyboard
+           arrows, this IS an interactive separator. Svelte's a11y lint
+           doesn't recognize "separator" as interactive, so we suppress here. -->
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <div
+        class="resize-handle"
+        role="separator"
+        aria-orientation="horizontal"
+        aria-valuenow={Math.round(bufferPercent)}
+        aria-valuemin="15"
+        aria-valuemax="85"
+        aria-label="Resize panel split — ArrowUp/Down to adjust, Home to reset"
+        tabindex="0"
+        onmousedown={startResize}
+        ondblclick={() => (bufferPercent = 55)}
+        onkeydown={handleResizeKeydown}
+        title="Drag to resize · double-click or Home key to reset"
+      >
+        <span class="resize-grip"></span>
+      </div>
       <div class="analysis-slot">
         <div class="bottom-tabs">
           <button
@@ -971,15 +1044,60 @@
   }
 
   .buffer-content.split .buffer-body {
-    flex: 0 0 55%;
-    border-bottom: 1px solid #1e2a40;
+    flex: 0 0 var(--buffer-pct, 55%);
+    min-height: 0;
   }
 
   .buffer-content.split .analysis-slot {
-    flex: 0 0 45%;
+    flex: 1;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
+  }
+
+  /* Drag handle between top buffer and bottom analysis panel.
+     Subtle by default; visible grip on hover; cursor changes to ns-resize. */
+  .resize-handle {
+    flex: 0 0 6px;
+    background: #1e2a40;
+    cursor: ns-resize;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .resize-handle:hover,
+  .resize-handle:focus-visible {
+    background: #4f6ef7;
+    outline: none;
+  }
+
+  .resize-grip {
+    width: 36px;
+    height: 2px;
+    background: #3a4a6a;
+    border-radius: 2px;
+    transition: background 0.15s;
+  }
+
+  .resize-handle:hover .resize-grip,
+  .resize-handle:focus-visible .resize-grip {
+    background: #c0d0ff;
+  }
+
+  /* During active drag: disable text selection on the whole panel so
+     the cursor can sweep freely without highlighting trace contents. */
+  .buffer-content.resizing {
+    user-select: none;
+  }
+  .buffer-content.resizing .resize-handle {
+    background: #4f6ef7;
+  }
+  .buffer-content.resizing .resize-grip {
+    background: #c0d0ff;
   }
 
   /* Bottom tab bar */

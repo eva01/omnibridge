@@ -219,9 +219,9 @@ OmniBridge is **not** a chatbot wrapper — every Opus 4.7 capability below maps
 | Capability | How OmniBridge uses it | What would break without it |
 |---|---|---|
 | **Adaptive extended thinking** (`thinking: {type: "adaptive"}`) | Model spends more compute on Modbus RTU & unknown binary protocols, less on obvious NMEA/CSV | CAS scale would still work; Modbus CRC16 inference would regress to guesswork |
-| **Multi-turn tool use** (6 tools, up to 8 iterations) | `analyze_binary_structure` → `read_more_lines` → `get_device_metadata` — Claude chains tools until confidence ≥ 80% | Single-shot analysis misses binary protocols entirely; no way to cross-reference VID/PID mid-reasoning |
+| **Multi-turn tool use** (6 tools, up to 8 iterations) | Claude picks from six purpose-built tools. For binary streams, `analyze_binary_structure` alone often returns enough (CRC validation + frame autocorrelation + sample frames) to commit — surgical efficiency. The agent can chain additional tools when the first isn't conclusive. | Without multi-turn tool use there's no way to call custom CRC validation, cross-reference VID/PID, or probe baud mid-reasoning — binary protocol inference collapses |
 | **Thinking preservation across tool results** (streaming `.finalMessage()`) | Each tool result is evaluated *with* the prior thinking still in context, so Claude builds on its own hypotheses instead of restarting | Tool calls would become independent shots; user sees "random" tool selection in the trace |
-| **Prompt caching** (`cache_control: ephemeral` on system prompt) | 70% cheaper after the first call — investigation cost drops from $0.15 to ~$0.05 | Every analyze-live retrigger would cost full price; Live Mode becomes economically unviable |
+| **Prompt caching** (`cache_control: ephemeral` on system prompt) | ~65% cache hit rate on repeat investigations (cached reads are ~10× cheaper per token than fresh input). Saves real money on every Live Mode retrigger | Every analyze-live retrigger would pay full fresh-input price; Live Mode becomes economically unviable on a hobbyist key |
 | **1M-token context window** | Full 1000-line buffer + VID/PID metadata + all 6 tool definitions fit in a single request | Would need to truncate buffer aggressively, losing rare packet types that only appear once per 500 lines |
 
 ### The investigation loop in detail
@@ -230,25 +230,25 @@ OmniBridge is **not** a chatbot wrapper — every Opus 4.7 capability below maps
 User clicks 🔬 Investigate on Modbus PLC
   ↓
 [Claude, interleaved reasoning]
-  "printable_ratio probably low — start with binary analysis"
+  "Binary stream. Hypothesize Modbus RTU framing
+   (slave 1, FC 3, 10 registers × 2 bytes + CRC)."
   ↓
 [tool: analyze_binary_structure]
-  → returns: printable_ratio=0.12, frame_length=25,
-             modbus_crc_check.validity_ratio=1.0
+  → returns: 21/21 frames pass CRC16 · STRONG MATCH
+             frame_length=25, sample_frames_hex=[...]
   ↓
-[Claude, now confident]
-  "All 18 frames pass CRC16-IBM. This is Modbus RTU."
-  ↓
-[tool: get_device_metadata]
-  → returns: Schneider Electric · Modicon M221
+[Claude, now confident — one tool was enough]
+  "Strong Modbus RTU match. Emit 5 fields with
+   byte-offset regex on hex representation."
   ↓
 [Final JSON]
   protocol: "Modbus RTU"
   confidence: 98
-  fields: [temp, pressure, flow, motor_rpm, valve_pct, alarm_bits]
+  fields: [reg0 ... reg4]   ← 5 real registers; regs 5-9 are zeros
+  command_presets: [Read 10 holding regs @0, Read first 2 regs, ...]
 ```
 
-**That whole flow is ~20 seconds, 3 API calls, and ~$0.04 in tokens.** A human engineer doing the same task from scratch typically takes 2–4 hours with a Modbus RTU reference manual open.
+**That whole flow is ~15 seconds, 2 API calls, and ~$0.22 in tokens.** Compare to a human engineer doing the same task from scratch — typically 2–4 hours with a Modbus RTU reference manual open, roughly $200–400 of engineering time. OmniBridge is ~1,000× cheaper per identification.
 
 ---
 
