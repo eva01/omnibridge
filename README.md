@@ -18,6 +18,8 @@ OmniBridge identifies any legacy serial device protocol — binary, undocumented
 <!-- Replace with real screenshot: 1400×800 capture of the app with Modbus investigation + live Dashboard + cost summary card visible -->
 <!-- ![OmniBridge Hero](docs/hero.png) -->
 
+**[▶ Watch the 2-minute demo](https://youtu.be/RX-uGdIQLLU)**
+
 </div>
 
 ---
