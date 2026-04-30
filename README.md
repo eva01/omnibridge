@@ -143,7 +143,13 @@ Throttled webhook forwarding to any HTTP endpoint. Per-device config (URL, metho
 
 ### Download
 
-Pre-built DMG/installer: **[Releases page](../../releases/latest)** *(add your release URL after first release)*
+**[⬇ Download latest release](../../releases/latest)** — DMG (macOS universal) · MSI (Windows) · AppImage (Linux)
+
+| Platform | File | Notes |
+|----------|------|-------|
+| macOS (Intel + Apple Silicon) | `OmniBridge_x.x.x_universal.dmg` | Right-click → Open on first launch (unsigned build) |
+| Windows | `OmniBridge_x.x.x_x64-setup.exe` | Click "More info" → "Run anyway" if SmartScreen appears |
+| Linux | `OmniBridge_x.x.x_amd64.AppImage` | `chmod +x OmniBridge*.AppImage && ./OmniBridge*.AppImage` |
 
 Or build from source (below).
 
