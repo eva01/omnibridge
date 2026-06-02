@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serialport::{SerialPortInfo, SerialPortType};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -57,11 +58,52 @@ pub struct DiscoveredDevice {
 }
 
 pub fn list_devices() -> Vec<DiscoveredDevice> {
-    serialport::available_ports()
-        .unwrap_or_default()
-        .iter()
-        .map(classify_port)
-        .collect()
+    let mut perangkat_terpilih: HashMap<String, DiscoveredDevice> = HashMap::new();
+
+    for info in serialport::available_ports().unwrap_or_default().iter() {
+        let perangkat = classify_port(info);
+        let kunci_port = kunci_pasangan_port(&perangkat.port);
+
+        match perangkat_terpilih.get(&kunci_port) {
+            None => {
+                perangkat_terpilih.insert(kunci_port, perangkat);
+            }
+            Some(perangkat_lama) => {
+                if pilih_port_lebih_baik(&perangkat.port, &perangkat_lama.port) {
+                    perangkat_terpilih.insert(kunci_port, perangkat);
+                }
+            }
+        }
+    }
+
+    let mut hasil: Vec<DiscoveredDevice> = perangkat_terpilih.into_values().collect();
+    hasil.sort_by(|a, b| a.port.cmp(&b.port));
+    hasil
+}
+
+fn kunci_pasangan_port(nama_port: &str) -> String {
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(akhiran_port) = nama_port.strip_prefix("/dev/tty.") {
+            return format!("/dev/{}", akhiran_port);
+        }
+        if let Some(akhiran_port) = nama_port.strip_prefix("/dev/cu.") {
+            return format!("/dev/{}", akhiran_port);
+        }
+    }
+    nama_port.to_string()
+}
+
+fn pilih_port_lebih_baik(nama_port_baru: &str, nama_port_lama: &str) -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        let port_baru_cu = nama_port_baru.starts_with("/dev/cu.");
+        let port_lama_cu = nama_port_lama.starts_with("/dev/cu.");
+        if port_baru_cu != port_lama_cu {
+            return port_baru_cu;
+        }
+    }
+    false
 }
 
 fn classify_port(info: &SerialPortInfo) -> DiscoveredDevice {
