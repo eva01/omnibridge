@@ -172,7 +172,7 @@
           {#if showKey}
             <input
               type="text"
-              placeholder="sk-ant-api03-..."
+              placeholder="Tempel API key Anthropic di sini"
               bind:value={apiKey}
               autocomplete="off"
               spellcheck="false"
@@ -180,7 +180,7 @@
           {:else}
             <input
               type="password"
-              placeholder="sk-ant-api03-..."
+              placeholder="Tempel API key Anthropic di sini"
               bind:value={apiKey}
               autocomplete="off"
               spellcheck="false"
