@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serialport::{SerialPortInfo, SerialPortType};
 use std::collections::HashMap;
+use std::fs;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -76,9 +77,62 @@ pub fn list_devices() -> Vec<DiscoveredDevice> {
         }
     }
 
+    // Fallback khusus macOS: beberapa adaptor CH340 kadang tidak muncul
+    // di available_ports(), tapi nodenya tetap ada di /dev.
+    for perangkat in daftar_port_fallback_macos() {
+        let kunci_port = kunci_pasangan_port(&perangkat.port);
+        if !perangkat_terpilih.contains_key(&kunci_port) {
+            perangkat_terpilih.insert(kunci_port, perangkat);
+        }
+    }
+
     let mut hasil: Vec<DiscoveredDevice> = perangkat_terpilih.into_values().collect();
     hasil.sort_by(|a, b| a.port.cmp(&b.port));
     hasil
+}
+
+fn daftar_port_fallback_macos() -> Vec<DiscoveredDevice> {
+    #[cfg(target_os = "macos")]
+    {
+        let mut daftar_perangkat: Vec<DiscoveredDevice> = Vec::new();
+        let Ok(entri_dev) = fs::read_dir("/dev") else {
+            return daftar_perangkat;
+        };
+
+        for entri in entri_dev.flatten() {
+            let Some(nama_file) = entri.file_name().to_str().map(|s| s.to_string()) else {
+                continue;
+            };
+
+            let kandidat = nama_file.starts_with("cu.usb")
+                || nama_file.starts_with("cu.wch")
+                || nama_file.starts_with("tty.usb")
+                || nama_file.starts_with("tty.wch");
+            if !kandidat {
+                continue;
+            }
+
+            let nama_port = format!("/dev/{}", nama_file);
+            daftar_perangkat.push(DiscoveredDevice {
+                port: nama_port,
+                device_class: DeviceClass::UnknownUsb,
+                label: DeviceClass::UnknownUsb.label().to_string(),
+                manufacturer: None,
+                product: None,
+                vid: None,
+                pid: None,
+                serial_number: None,
+                suggested_baud: 9600,
+            });
+        }
+
+        return daftar_perangkat;
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Vec::new()
+    }
 }
 
 fn kunci_pasangan_port(nama_port: &str) -> String {

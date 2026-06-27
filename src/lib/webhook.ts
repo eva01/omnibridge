@@ -1,9 +1,17 @@
 import { Store } from '@tauri-apps/plugin-store';
+import { invoke } from '@tauri-apps/api/core';
 
 const STORE_FILE = 'omnibridge.webhooks.json';
 const KEY_CONFIGS = 'configs';
 
 export type WebhookMethod = 'POST' | 'PUT' | 'PATCH';
+
+/** How the request body is encoded.
+ *  - `json`: structured WebhookPayload as application/json (default).
+ *  - `form`: render `form_template` into application/x-www-form-urlencoded.
+ *    Needed for legacy endpoints that read `$_POST` form fields (e.g. a
+ *    CodeIgniter `$this->input->post('scales-weight')` controller). */
+export type WebhookBodyFormat = 'json' | 'form';
 
 export interface WebhookConfig {
   enabled: boolean;
@@ -12,6 +20,8 @@ export interface WebhookConfig {
   throttle_ms: number;
   include_raw: boolean;
   custom_headers: string; // newline-separated "Key: Value"
+  body_format: WebhookBodyFormat;
+  form_template: string; // e.g. "scales-code={{port}}&scales-weight={{weight}}&company-id=1"
 }
 
 export interface WebhookStats {
@@ -43,6 +53,8 @@ export function defaultConfig(): WebhookConfig {
     throttle_ms: 1000,
     include_raw: false,
     custom_headers: '',
+    body_format: 'json',
+    form_template: '',
   };
 }
 
@@ -73,7 +85,11 @@ async function getAllConfigs(): Promise<Record<string, WebhookConfig>> {
 
 export async function getConfig(fingerprint: string): Promise<WebhookConfig | null> {
   const all = await getAllConfigs();
-  return all[fingerprint] ?? null;
+  const stored = all[fingerprint];
+  if (!stored) return null;
+  // Merge defaults so configs saved before body_format/form_template existed
+  // still load with sane values instead of undefined.
+  return { ...defaultConfig(), ...stored };
 }
 
 export async function saveConfig(fingerprint: string, config: WebhookConfig): Promise<void> {
@@ -113,6 +129,42 @@ export interface SendResult {
   bodyPreview?: string;
 }
 
+/** Resolve a single `{{token}}` against the payload. Field values win over the
+ *  top-level metadata keys, so `{{weight}}` pulls fields.weight.value. */
+function resolveToken(token: string, payload: WebhookPayload): string {
+  switch (token) {
+    case 'port':
+      return payload.port;
+    case 'protocol':
+      return payload.protocol;
+    case 'confidence':
+      return String(payload.confidence);
+    case 'timestamp':
+      return String(payload.timestamp);
+    case 'device_class':
+      return payload.device_class ?? '';
+    default: {
+      const field = payload.fields[token];
+      return field ? String(field.value) : '';
+    }
+  }
+}
+
+/** Render a form template like `scales-weight={{weight}}&company-id=1` into a
+ *  urlencoded body. Only the substituted VALUES are encoded — the `&`/`=`
+ *  structure is left literal so it stays a valid form body. */
+export function renderFormBody(template: string, payload: WebhookPayload): string {
+  return template.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (_match, token: string) =>
+    encodeURIComponent(resolveToken(token, payload))
+  );
+}
+
+interface TauriWebhookResponse {
+  ok: boolean;
+  status: number;
+  body_preview: string;
+}
+
 export async function sendWebhook(
   config: WebhookConfig,
   payload: WebhookPayload
@@ -128,32 +180,38 @@ export async function sendWebhook(
     return { ok: false, status: null, error: 'Invalid URL format' };
   }
 
+  let body: string;
+  let contentType: string;
+  if (config.body_format === 'form') {
+    body = renderFormBody(config.form_template ?? '', payload);
+    contentType = 'application/x-www-form-urlencoded';
+  } else {
+    body = JSON.stringify(payload);
+    contentType = 'application/json';
+  }
+
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    'Content-Type': contentType,
     'User-Agent': 'OmniBridge/0.1',
     ...parseHeaders(config.custom_headers),
   };
 
+  // Send via the Rust side (native HTTP client) so the request bypasses the
+  // WebView's CORS enforcement. A browser fetch() to a legacy endpoint without
+  // Access-Control-* headers fails preflight as "TypeError: Failed to fetch".
   try {
-    const res = await fetch(config.url, {
+    const res = await invoke<TauriWebhookResponse>('send_webhook_request', {
+      url: config.url,
       method: config.method,
       headers,
-      body: JSON.stringify(payload),
+      body,
     });
-
-    let bodyPreview = '';
-    try {
-      const text = await res.text();
-      bodyPreview = text.slice(0, 120);
-    } catch {
-      // ignore
-    }
 
     return {
       ok: res.ok,
       status: res.status,
-      bodyPreview,
-      error: res.ok ? undefined : `HTTP ${res.status} ${res.statusText}`,
+      bodyPreview: res.body_preview,
+      error: res.ok ? undefined : `HTTP ${res.status}`,
     };
   } catch (e) {
     return { ok: false, status: null, error: String(e) };

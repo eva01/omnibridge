@@ -131,7 +131,6 @@
   let showWebhookModal = $state(false);
   let webhookConfig = $state<WebhookConfig | null>(null);
   let webhookStats = $state<WebhookStats>(defaultStats());
-  let webhookDirty = $state(false); // something new to send since last flush
 
   const webhookKey = $derived(deviceFingerprint ?? `port:${port}`);
 
@@ -144,14 +143,11 @@
     });
   });
 
-  // Mark dirty whenever new lines arrive and webhook is active with analysis
-  $effect(() => {
-    if (!webhookConfig?.enabled || !analysisResult) return;
-    lines.length; // subscribe
-    webhookDirty = true;
-  });
-
-  // Throttle timer — fires periodically and flushes latest snapshot if dirty
+  // Throttle timer — fires periodically; sends latest snapshot when there's
+  // valid data to forward. Earlier dirty-flag pattern relied on Svelte
+  // tracking `lines.length` inside an effect with an early return, which did
+  // not always re-subscribe across config changes — webhook only fired on
+  // manual Test. Simpler model: every interval, check conditions, send.
   $effect(() => {
     if (!webhookConfig?.enabled) return;
     const ms = Math.max(200, webhookConfig.throttle_ms);
@@ -185,10 +181,9 @@
   }
 
   async function flushWebhook() {
-    if (!webhookConfig?.enabled || !webhookDirty) return;
+    if (!webhookConfig?.enabled || !analysisResult) return;
     const payload = buildPayload();
     if (!payload || Object.keys(payload.fields).length === 0) return;
-    webhookDirty = false;
     const result = await sendWebhook(webhookConfig, payload);
     webhookStats = {
       sent: webhookStats.sent + (result.ok ? 1 : 0),

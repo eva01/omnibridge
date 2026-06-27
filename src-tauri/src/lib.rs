@@ -6,6 +6,7 @@ use std::io::Write;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
+use serialport::{DataBits, FlowControl, Parity, SerialPort, StopBits};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct PortDataEvent {
@@ -40,6 +41,39 @@ fn is_active(registry: &MonitorRegistry, port: &str) -> bool {
         .get(port)
         .map(|r| r.active)
         .unwrap_or(false)
+}
+
+fn kandidat_port_macos(nama_port: &str) -> Vec<String> {
+    let mut daftar_port = vec![nama_port.to_string()];
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(akhiran_port) = nama_port.strip_prefix("/dev/cu.") {
+            daftar_port.push(format!("/dev/tty.{}", akhiran_port));
+        } else if let Some(akhiran_port) = nama_port.strip_prefix("/dev/tty.") {
+            daftar_port.push(format!("/dev/cu.{}", akhiran_port));
+        }
+    }
+    daftar_port
+}
+
+fn buka_port_dengan_konfigurasi(nama_port: &str, baud_rate: u32) -> Result<Box<dyn SerialPort>, String> {
+    let mut daftar_error: Vec<String> = Vec::new();
+    for kandidat_port in kandidat_port_macos(nama_port) {
+        let hasil_buka = serialport::new(&kandidat_port, baud_rate)
+            .data_bits(DataBits::Eight)
+            .parity(Parity::None)
+            .stop_bits(StopBits::One)
+            .flow_control(FlowControl::None)
+            .timeout(std::time::Duration::from_millis(100))
+            .open();
+        match hasil_buka {
+            Ok(port_serial) => return Ok(port_serial),
+            Err(error_buka) => {
+                daftar_error.push(format!("{} => {}", kandidat_port, error_buka));
+            }
+        }
+    }
+    Err(daftar_error.join(" | "))
 }
 
 #[tauri::command]
@@ -77,10 +111,7 @@ async fn start_port_monitor(
     let reg = registry.clone();
 
     std::thread::spawn(move || {
-        let mut serial = match serialport::new(&port_name, baud_rate)
-            .timeout(std::time::Duration::from_millis(100))
-            .open()
-        {
+        let mut serial = match buka_port_dengan_konfigurasi(&port_name, baud_rate) {
             Ok(p) => p,
             Err(e) => {
                 let _ = app.emit(
@@ -193,10 +224,7 @@ fn is_printable_byte(b: u8) -> bool {
 }
 
 fn probe_single_sync(port: &str, baud: u32) -> BaudProbeResult {
-    let mut serial = match serialport::new(port, baud)
-        .timeout(std::time::Duration::from_millis(50))
-        .open()
-    {
+    let mut serial = match buka_port_dengan_konfigurasi(port, baud) {
         Ok(p) => p,
         Err(e) => {
             return BaudProbeResult {
@@ -294,6 +322,48 @@ fn stop_port_monitor(
     Ok(())
 }
 
+#[derive(Debug, Clone, Serialize)]
+struct WebhookResponse {
+    ok: bool,
+    status: u16,
+    body_preview: String,
+}
+
+/// Forward a webhook from the Rust side so the request is NOT subject to the
+/// WebView's CORS policy. Legacy/self-hosted endpoints (e.g. CodeIgniter REST
+/// APIs) rarely send Access-Control-* headers, so a browser `fetch()` fails the
+/// preflight with "TypeError: Failed to fetch" before the request leaves the
+/// app. A native client has no such restriction.
+#[tauri::command]
+async fn send_webhook_request(
+    url: String,
+    method: String,
+    headers: HashMap<String, String>,
+    body: String,
+) -> Result<WebhookResponse, String> {
+    let http_method = reqwest::Method::from_bytes(method.as_bytes())
+        .map_err(|e| format!("Invalid method '{}': {}", method, e))?;
+
+    let client = reqwest::Client::new();
+    let mut request = client.request(http_method, &url);
+    for (key, value) in headers {
+        request = request.header(key, value);
+    }
+    request = request.body(body);
+
+    let response = request.send().await.map_err(|e| e.to_string())?;
+    let status = response.status().as_u16();
+    let ok = response.status().is_success();
+    let text = response.text().await.unwrap_or_default();
+    let body_preview: String = text.chars().take(120).collect();
+
+    Ok(WebhookResponse {
+        ok,
+        status,
+        body_preview,
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let registry: MonitorRegistry = Arc::new(Mutex::new(HashMap::new()));
@@ -309,6 +379,7 @@ pub fn run() {
             stop_port_monitor,
             probe_single_baud,
             send_bytes_to_port,
+            send_webhook_request,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

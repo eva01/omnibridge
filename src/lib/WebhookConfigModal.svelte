@@ -3,6 +3,7 @@
   import {
     defaultConfig,
     sendWebhook,
+    renderFormBody,
     type WebhookConfig,
     type WebhookPayload,
     type WebhookStats,
@@ -61,6 +62,25 @@
   function handleBackdrop(e: MouseEvent) {
     if (e.target === e.currentTarget) onClose();
   }
+
+  // Tokens the user can drop into the form template — top-level metadata plus
+  // every parsed field name from the current sample.
+  const availableTokens = $derived([
+    'port',
+    'protocol',
+    'confidence',
+    'timestamp',
+    'device_class',
+    ...(samplePayload ? Object.keys(samplePayload.fields) : []),
+  ]);
+
+  // Live preview of the exact body that will be sent.
+  const bodyPreview = $derived.by(() => {
+    if (!samplePayload) return '';
+    return draft.body_format === 'form'
+      ? renderFormBody(draft.form_template ?? '', samplePayload)
+      : JSON.stringify(samplePayload, null, 2);
+  });
 </script>
 
 <div
@@ -120,13 +140,53 @@
         </div>
       </div>
 
+      <!-- Body format -->
+      <div class="field">
+        <label for="wh-format">Body Format</label>
+        <select id="wh-format" bind:value={draft.body_format}>
+          <option value="json">JSON (structured payload)</option>
+          <option value="form">Form URL-encoded (legacy $_POST)</option>
+        </select>
+      </div>
+
+      <!-- Form template (only when form-encoded) -->
+      {#if draft.body_format === 'form'}
+        <div class="field">
+          <label for="wh-template">
+            Form Body Template
+            <span class="hint">use <code>{'{{token}}'}</code> placeholders</span>
+          </label>
+          <textarea
+            id="wh-template"
+            rows="2"
+            placeholder="scales-code={'{{port}}'}&amp;scales-weight={'{{weight}}'}&amp;company-id=1"
+            bind:value={draft.form_template}
+          ></textarea>
+          {#if availableTokens.length > 0}
+            <div class="tokens">
+              <span class="tokens-label">Available:</span>
+              {#each availableTokens as tok}
+                <button
+                  type="button"
+                  class="token-chip"
+                  title="Insert {`{{${tok}}}`}"
+                  onclick={() => (draft.form_template = (draft.form_template ?? '') + `{{${tok}}}`)}
+                >
+                  {tok}
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+
       <!-- Custom headers -->
       <div class="field">
         <label for="wh-headers">Custom Headers <span class="hint">(one per line: <code>Key: Value</code>)</span></label>
         <textarea
           id="wh-headers"
           rows="3"
-          placeholder="Authorization: Bearer xxx&#10;X-API-Key: yyy"
+          placeholder="gs-key: your-api-key&#10;Authorization: Bearer xxx"
           bind:value={draft.custom_headers}
         ></textarea>
       </div>
@@ -163,10 +223,11 @@
 
       {#if samplePayload}
         <button class="payload-toggle" onclick={() => (showPayload = !showPayload)}>
-          {showPayload ? '▼' : '▶'} Preview payload
+          {showPayload ? '▼' : '▶'} Preview body
+          <span class="format-tag">{draft.body_format === 'form' ? 'form-urlencoded' : 'json'}</span>
         </button>
         {#if showPayload}
-          <pre class="payload">{JSON.stringify(samplePayload, null, 2)}</pre>
+          <pre class="payload">{bodyPreview}</pre>
         {/if}
       {/if}
     </div>
@@ -425,6 +486,47 @@
   }
 
   .payload-toggle:hover { color: #90a8e0; }
+
+  .format-tag {
+    font-size: 0.6rem;
+    background: #1a2038;
+    color: #6a80b0;
+    padding: 0.05rem 0.35rem;
+    border-radius: 8px;
+    font-family: "JetBrains Mono", monospace;
+    margin-left: 0.3rem;
+  }
+
+  .tokens {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+  }
+
+  .tokens-label {
+    font-size: 0.66rem;
+    color: #4a5a7a;
+  }
+
+  .token-chip {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.66rem;
+    background: #141c30;
+    color: #8aa0d0;
+    border: 1px solid #2a3450;
+    border-radius: 4px;
+    padding: 0.1rem 0.35rem;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .token-chip:hover {
+    background: #1c2640;
+    color: #b0c4f0;
+    border-color: #3a4a70;
+  }
 
   .payload {
     background: #0a0e1a;

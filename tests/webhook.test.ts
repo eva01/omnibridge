@@ -1,5 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import { parseHeaders, defaultConfig, sendWebhook } from '../src/lib/webhook.js';
+import {
+  parseHeaders,
+  defaultConfig,
+  sendWebhook,
+  renderFormBody,
+  type WebhookPayload,
+} from '../src/lib/webhook.js';
+
+const samplePayload: WebhookPayload = {
+  timestamp: 1719500000000,
+  port: 'TIMBANGAN-01',
+  device_class: 'scale',
+  protocol: 'CAS Scale',
+  confidence: 0.95,
+  fields: {
+    weight: { value: 1.234, unit: 'kg', updated_at: 1719500000000 },
+    stable: { value: 'ST', updated_at: 1719500000000 },
+  },
+};
 
 describe('parseHeaders', () => {
   it('parses simple Key: Value pairs', () => {
@@ -25,6 +43,26 @@ describe('parseHeaders', () => {
   it('trims whitespace around key and value', () => {
     const h = parseHeaders('  X-Spaced  :   trimmed value  ');
     expect(h).toEqual({ 'X-Spaced': 'trimmed value' });
+  });
+});
+
+describe('renderFormBody', () => {
+  it('substitutes field tokens and url-encodes values', () => {
+    const body = renderFormBody(
+      'scales-code={{port}}&scales-weight={{weight}}&company-id=1',
+      samplePayload
+    );
+    expect(body).toBe('scales-code=TIMBANGAN-01&scales-weight=1.234&company-id=1');
+  });
+
+  it('resolves top-level metadata tokens', () => {
+    const body = renderFormBody('protocol={{protocol}}&conf={{confidence}}', samplePayload);
+    expect(body).toBe('protocol=CAS%20Scale&conf=0.95');
+  });
+
+  it('leaves unknown tokens empty', () => {
+    const body = renderFormBody('missing={{unknown}}', samplePayload);
+    expect(body).toBe('missing=');
   });
 });
 
